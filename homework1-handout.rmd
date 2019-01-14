@@ -86,7 +86,7 @@ glimpse(algae)
     `dplyr`. 
 
 
-```{r}
+```{r count by season}
 
 season_obs <- algae %>% 
   group_by(season) %>% 
@@ -98,6 +98,28 @@ season_obs <- algae %>%
     #. Are there missing values? Calculate the mean and variance of each
     chemical (Ignore $a_1$ through $a_7$). What do you notice about the
     magnitude of the two quantities for different chemicals? 
+```{r no data count}
+
+algae_na <- algae %>%
+  select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
+  summarise_all(function(x) sum(is.na(x)))
+
+```
+
+
+```{r means and variance}
+
+print('Mean')
+chem_means <- algae %>% 
+  select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
+  summarise_all(function (x) mean(x, na.rm=TRUE)) 
+
+print('Variance')
+chem_vars <- algae %>% 
+   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
+  summarise_all(function (x) var(x, na.rm=TRUE)) 
+
+```
 
 
     #. Mean and Variance is one measure of central tendency and spread of data.
@@ -107,20 +129,96 @@ season_obs <- algae %>%
         For a univariate data set $X_1, X_2, ..., X_n$, the Median Absolute Deviation (MAD) is defined as the median of the absolute deviations from the data's median: $$\text{MAD}=\text{median} (|X_i-\text{median}(X)|)$$
 
         Compute median and MAD of each chemical and compare the two sets of quantities (i.e., mean & variance vs. median & MAD). What do you notice? 
+        
+```{r median and mads}
 
+print('Median')
+chem_medians <- algae %>% 
+  select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>% 
+  summarise_all(function (x) median(x, na.rm=TRUE))
+
+print('MADs')
+chem_mads <- algae %>% 
+  select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
+  summarise_all(function (x) mad(x, na.rm=TRUE))
+
+```
+    
 
 2. __*Data visualization*__ Most of the time, the information in the data set is also well captured graphically. Histogram, scatter plot, boxplot, Q-Q plot are frequently used tools for data visualization. Use ggplot for all of these visualizations. 
     
     #. Produce a histogram of $mxPH$ with the title 'Histogram of mxPH' based on algae data set. Use an appropriate argument to show the probability instead of the frequency as the vertical axis. (Hint: look at the examples in the help file for function `geom_histogram()`). Is the distribution skewed? 
+    
+```{r}
+
+hist_mxPH <- ggplot(algae, aes(x = mxPH)) +
+  geom_histogram(bins = 12)  + #2*(200)^1/3
+  labs(title = 'Histogram of mxPH') +
+  ylab('Probability') +
+  scale_y_continuous(labels =scales::percent) +
+  geom_density() +
+  geom_rug()
+
+hist_mxPH
+```
+
         
     #. Add a density curve using `geom_density()` and rug plots using `geom_rug()` to above histogram. 
   
     #. Create a boxplot with the title 'A conditioned Boxplot of Algal $a_1$' for $a_1$ grouped by $size$. (Refer to help page for `geom_boxplot()`). 
   
+  
+```{r boxplot}
+
+algae_boxplot <- ggplot(algae, aes(size, a1)) +
+  geom_boxplot(outlier.color = 'orange') +
+  labs(title = 'A conditioned Boxplot of Algal a1')
+
+algae_boxplot
+
+```
+  
     #. Are there any outliers for $NO3$ and $NH4$? How many observations would you consider as outliers? How did you arrive at this conclusion? 
+    
+    
+```{r}
+    
+NO3_boxplot <- ggplot(algae, aes(x = 'NO3', y = NO3)) + 
+  geom_boxplot(outlier.color = 'orange') +
+  labs(title = 'A conditioned Boxplot of NO3')
+
+NO3_boxplot 
+
+NO3season_boxplot <- ggplot(algae, aes(season, y = NO3)) +
+  geom_boxplot(outlier.color = 'orange') +
+  labs(title = 'A conditioned Boxplot of NO3 by Season')
+
+NO3season_boxplot
+
+```
+
+By separating the NO3 data into seasons, we can see that there is a clear outlier in autumn that is significantly further from the Interquartile Range than outliers in other months. Note: outliers are indicated in orange. Thus, we will only consider this one autumn outlier as a true outlier. 
+
+```{r}
+
+NH4_boxplot <- ggplot(algae, aes(x = 'NH4', y = NH4)) + 
+  geom_boxplot(outlier.color = 'orange') +
+  labs(title = 'A conditioned Boxplot of NH4')
+
+NH4_boxplot 
+
+NH4season_boxplot <- ggplot(algae, aes(season, y = NH4)) +
+  geom_boxplot(outlier.color = 'orange') +
+  labs(title = 'A conditioned Boxplot of NH4 by Season')
+
+NH4season_boxplot
+
+```
+
 
     #. Compare mean & variance vs. median & MAD for $NO3$ and $NH4$. What do you notice? Can you conclude which set of measures is more robust when outliers are present? 
-    
+
+There is a larger difference between mean and median values for NH4 than NO3. The same pattern is true for variance and MAD, however the variance is much larger for NH4 than NO3. The median and MAD are a more appropriate measure when outliers are present because the value in autumn seems to skew our data when considered in parameters that average all values. 
         
 ----------------------------------------------
     
@@ -145,6 +243,18 @@ problem.
     are there in each variable? 
 
 
+```{r missing values}
+
+missingvalues <- algae %>%
+  select(c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4',
+  'oPO4','PO4','Chla','a1','a2','a3','a4','a5', 'a6', 'a7')) %>%
+  summarise_all(function(x) sum(is.na(x)))
+
+sum(missingvalues>0)
+
+```
+
+There are 8 observations that contain missing values. 
 
     #. **Removing observations with missing values**: use `filter()` function
     in `dplyr` package to observations with any missing value, and save the
@@ -153,6 +263,12 @@ problem.
     
         Hint: `complete.cases()` may be useful.
 
+```{r}
+
+algae.del <- algae %>% 
+  filter_all(all_vars(!is.na(.)))
+
+```
 
 
 
@@ -167,6 +283,13 @@ problem.
         the values of each chemical for the $48^{th}$, $62^{th}$ and $199^{th}$
         obsevation in `algae.med`. 
 
+```{r}
+
+algae.med <- algae %>% 
+  mutate_at(.vars = c('mxPH','mnO2','Cl','NO3','NH4',
+  'oPO4','PO4','Chla'), .funs = funs(ifelse(is.na(.), median(., na.rm = TRUE), .)))
+
+```
 
 
         This simple strategy, although extremely fast and thus appealing for
