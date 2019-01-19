@@ -6,22 +6,7 @@ graphics: yes
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-library(knitr)
-knitr::opts_chunk$set(echo=TRUE, 
-                      cache=TRUE, 
-                      fig.width=5, 
-                      fig.height=5,
-                      fig.align='center')
-indent1 = '    '
-indent2 = paste(rep(indent1, 2), collapse='')
-indent3 = paste(rep(indent1, 3), collapse='')
-r = function(x, digits=2){ round(x, digits=digits) }
-library(tidyverse)
-library(reshape2)
-library(kableExtra)
-library(stargazer)
-```
+
 
 __Note:__ If you are working with a partner, please submit only one homework per group with both names and whether you are taking the course for graduate credit or not.  Submit your Rmarkdown (.Rmd) and the compiled pdf on Gauchospace.
  
@@ -67,8 +52,8 @@ file (the training data, i.e. the data that will be used to obtain the
 predictive models). To read the data from the file it is sufficient to issue
 the following command:
 
-```{r load, message=F, warning=F, results="hide"}
 
+```r
 algae <- read_table2("algaeBloom.txt", col_names=
                       c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4',
                         'oPO4','PO4','Chla','a1','a2','a3','a4','a5','a6','a7'), 
@@ -88,12 +73,11 @@ glimpse(algae)
     `dplyr`. 
 
 
-```{r count by season}
 
+```r
 season_obs <- algae %>% 
   group_by(season) %>% 
   summarize(obs_count = n())
-  
 ```
 
 
@@ -101,28 +85,40 @@ season_obs <- algae %>%
     chemical (Ignore $a_1$ through $a_7$). What do you notice about the
     magnitude of the two quantities for different chemicals? 
     
-```{r no data count}
 
+```r
 algae_na <- algae %>%
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function(x) sum(is.na(x)))
-
 ```
 
 There are missing values for several variables. One value is missing for mxPH. NO3, NH4, oPO4, and PO4 are all missing two values. Cl and Chla are each missing 10 and 12 variables.
 
-```{r means and variance}
 
+```r
 print('Mean')
+```
+
+```
+## [1] "Mean"
+```
+
+```r
 chem_means <- algae %>% 
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) mean(x, na.rm=TRUE)) 
 
 print('Variance')
+```
+
+```
+## [1] "Variance"
+```
+
+```r
 chem_vars <- algae %>% 
    select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) var(x, na.rm=TRUE)) 
-
 ```
 
 The mean for NH4 is the largest, but it also has a disproportionately large variance as compared to the mean and variance coupling of other variables.
@@ -135,18 +131,31 @@ The mean for NH4 is the largest, but it also has a disproportionately large vari
 
         Compute median and MAD of each chemical and compare the two sets of quantities (i.e., mean & variance vs. median & MAD). What do you notice? 
         
-```{r median and mads}
 
+```r
 print('Median')
+```
+
+```
+## [1] "Median"
+```
+
+```r
 chem_medians <- algae %>% 
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>% 
   summarise_all(function (x) median(x, na.rm=TRUE))
 
 print('MADs')
+```
+
+```
+## [1] "MADs"
+```
+
+```r
 chem_mads <- algae %>% 
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) mad(x, na.rm=TRUE))
-
 ```
     
 
@@ -154,8 +163,8 @@ chem_mads <- algae %>%
     
     #. Produce a histogram of $mxPH$ with the title 'Histogram of mxPH' based on algae data set. Use an appropriate argument to show the probability instead of the frequency as the vertical axis. (Hint: look at the examples in the help file for function `geom_histogram()`). Is the distribution skewed? 
     
-```{r}
 
+```r
 hist_mxPH <- ggplot(algae, aes(x = mxPH)) +
   geom_histogram(bins = 12)  + #2*(200)^1/3
   labs(title = 'Histogram of mxPH') +
@@ -167,58 +176,107 @@ hist_mxPH <- ggplot(algae, aes(x = mxPH)) +
 hist_mxPH
 ```
 
+```
+## Warning: Removed 1 rows containing non-finite values (stat_bin).
+```
+
+```
+## Warning: Removed 1 rows containing non-finite values (stat_density).
+```
+
+
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-1-1} \end{center}
+
         
     #. Add a density curve using `geom_density()` and rug plots using `geom_rug()` to above histogram. 
   
     #. Create a boxplot with the title 'A conditioned Boxplot of Algal $a_1$' for $a_1$ grouped by $size$. (Refer to help page for `geom_boxplot()`). 
   
   
-```{r boxplot}
 
+```r
 algae_boxplot <- ggplot(algae, aes(size, a1)) +
   geom_boxplot(outlier.color = 'orange') +
   labs(title = 'A conditioned Boxplot of Algal a1')
 
 algae_boxplot
-
 ```
+
+
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/boxplot-1} \end{center}
   
     #. Are there any outliers for $NO3$ and $NH4$? How many observations would you consider as outliers? How did you arrive at this conclusion? 
     
     
-```{r}
-    
+
+```r
 NO3_boxplot <- ggplot(algae, aes(x = 'NO3', y = NO3)) + 
   geom_boxplot(outlier.color = 'orange') +
   labs(title = 'A conditioned Boxplot of NO3')
 
 NO3_boxplot 
+```
 
+```
+## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+```
+
+
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-2-1} \end{center}
+
+```r
 NO3season_boxplot <- ggplot(algae, aes(season, y = NO3)) +
   geom_boxplot(outlier.color = 'orange') +
   labs(title = 'A conditioned Boxplot of NO3 by Season')
 
 NO3season_boxplot
+```
 
 ```
+## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+```
+
+
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-2-2} \end{center}
 
 By separating the NO3 data into seasons, we can see that there is a clear outlier in autumn that is significantly further from the Interquartile Range than outliers in other months. Note: outliers are indicated in orange. Thus, we will only consider this one autumn outlier as a true outlier. 
 
-```{r}
 
+```r
 NH4_boxplot <- ggplot(algae, aes(x = 'NH4', y = NH4)) + 
   geom_boxplot(outlier.color = 'orange') +
   labs(title = 'A conditioned Boxplot of NH4')
 
 NH4_boxplot 
+```
 
+```
+## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+```
+
+
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-3-1} \end{center}
+
+```r
 NH4season_boxplot <- ggplot(algae, aes(season, y = NH4)) +
   geom_boxplot(outlier.color = 'orange') +
   labs(title = 'A conditioned Boxplot of NH4 by Season')
 
 NH4season_boxplot
+```
 
 ```
+## Warning: Removed 2 rows containing non-finite values (stat_boxplot).
+```
+
+
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-3-2} \end{center}
 
 
     #. Compare mean & variance vs. median & MAD for $NO3$ and $NH4$. What do you notice? Can you conclude which set of measures is more robust when outliers are present? 
@@ -248,15 +306,18 @@ problem.
     are there in each variable? 
 
 
-```{r missing values}
 
+```r
 missingvalues <- algae %>%
   select(c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4',
   'oPO4','PO4','Chla','a1','a2','a3','a4','a5', 'a6', 'a7')) %>%
   summarise_all(function(x) sum(is.na(x)))
 
 sum(missingvalues>0)
+```
 
+```
+## [1] 8
 ```
 
 There are 8 observations that contain missing values. 
@@ -268,11 +329,10 @@ There are 8 observations that contain missing values.
     
         Hint: `complete.cases()` may be useful.
 
-```{r}
 
+```r
 algae.del <- algae %>% 
   filter_all(all_vars(!is.na(.)))
-
 ```
 
 
@@ -288,8 +348,8 @@ algae.del <- algae %>%
         the values of each chemical for the $48^{th}$, $62^{th}$ and $199^{th}$
         obsevation in `algae.med`. 
 
-```{r}
 
+```r
 algae.med <- algae %>% 
   mutate_at(.vars = c('mxPH','mnO2','Cl','NO3','NH4',
   'oPO4','PO4','Chla'), .funs = funs(ifelse(is.na(.), median(., na.rm = TRUE), .)))
@@ -300,11 +360,32 @@ algae.med.199 <- algae.med[199, 4:11]
 
 algae.med.rows <- rbind(algae.med.48, algae.med.62, algae.med.199)
 rownames(algae.med.rows) <- c("48", "62", "199")
+```
 
+```
+## Warning: Setting row names on a tibble is deprecated.
+```
+
+```r
 kable(algae.med.rows, "latex", booktabs = T, 
       caption = "Chemical Observations for Specific Rows After Imputing") %>%  
       kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 ```
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-5}Chemical Observations for Specific Rows After Imputing}
+\centering
+\begin{tabular}[t]{lrrrrrrrr}
+\toprule
+  & mxPH & mnO2 & Cl & NO3 & NH4 & oPO4 & PO4 & Chla\\
+\midrule
+48 & 8.06 & 12.6 & 9.00 & 0.230 & 10.0000 & 5.00 & 6.0000 & 1.100\\
+62 & 6.40 & 9.8 & 32.73 & 2.675 & 103.1665 & 40.15 & 14.0000 & 5.475\\
+199 & 8.00 & 7.6 & 32.73 & 2.675 & 103.1665 & 40.15 & 103.2855 & 5.475\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 There are 200 observations in algae.med.
 
@@ -321,9 +402,7 @@ There are 200 observations in algae.med.
     
         Compute pairwise correlation between the continuous (chemical) variables. 
 
-```{r}
 
-```
 
 
         Then, fill in the missing value for `PO4` based on `oPO4` in the
@@ -360,27 +439,28 @@ model to data that have not been used for training.
         Since same computation is repeated 5 times, we can define the following
         function for simplicity.
 
-```{r cvtemplate,indent=indent2}
-do.chunk <- function(chunkid, chunkdef, dat){  # function argument
-  
-    train = (chunkdef != chunkid)
-
-    Xtr = dat[train,1:11]  # get training set
-    Ytr = dat[train,12]  # get true response values in trainig set
-
-    Xvl = dat[!train,1:11]  # get validation set
-    Yvl = dat[!train,12]  # get true response values in validation set
-
-    lm.a1 <- lm(a1~., data = dat[train,1:12])
-    predYtr = predict(lm.a1)  # predict training values
-    predYvl = predict(lm.a1,Xvl)  # predict validation values
-
-    data.frame(fold = chunkid,
-               train.error = mean((predYtr - Ytr)^2), # compute and store training error
-               val.error = mean((predYvl - Yvl)^2))   # compute and store test error
-
-}
-```
+        
+        ```r
+        do.chunk <- function(chunkid, chunkdef, dat){  # function argument
+          
+            train = (chunkdef != chunkid)
+        
+            Xtr = dat[train,1:11]  # get training set
+            Ytr = dat[train,12]  # get true response values in trainig set
+        
+            Xvl = dat[!train,1:11]  # get validation set
+            Yvl = dat[!train,12]  # get true response values in validation set
+        
+            lm.a1 <- lm(a1~., data = dat[train,1:12])
+            predYtr = predict(lm.a1)  # predict training values
+            predYvl = predict(lm.a1,Xvl)  # predict validation values
+        
+            data.frame(fold = chunkid,
+                       train.error = mean((predYtr - Ytr)^2), # compute and store training error
+                       val.error = mean((predYvl - Yvl)^2))   # compute and store test error
+        
+        }
+        ```
         
         First argument `chunkid` indicates which chunk to use as validation set
         (one of 1:5). Second argument `chunkdef` is chunk assignments from
@@ -398,12 +478,13 @@ do.chunk <- function(chunkid, chunkdef, dat){  # function argument
 
     #. Additional data can be found in the file `algaeTest.txt`.
 
-```{r real,indent=indent2,message=F,warning=F}
-algae.Test <- read_table2('algaeTest.txt',
-                    col_names=c('season','size','speed','mxPH','mnO2','Cl','NO3',
-                                'NH4','oPO4','PO4','Chla','a1'),
-                    na=c('XXXXXXX'))
-```
+        
+        ```r
+        algae.Test <- read_table2('algaeTest.txt',
+                            col_names=c('season','size','speed','mxPH','mnO2','Cl','NO3',
+                                        'NH4','oPO4','PO4','Chla','a1'),
+                            na=c('XXXXXXX'))
+        ```
        
         This data was not used to train the model and was not (e.g. wasn't used in the CV procedure to estimate the test error).  We can get a more accurate measure of true test error by evaluating the model fit on this held out set of data.  Using the same linear regression model from part 4 (fit to all of the training data), calculate the "true" test error of your predictions based on the newly collected measurements in `algaeTest.txt`.  Is this roughly what you expected based on the CV estimated test error from part 4? 
        
@@ -415,10 +496,11 @@ In this problem, we will be exploring a dataset of wages from a group of 3000 wo
 
 6.  First, install the `ISLR` package, which includes many of the datasets used in the ISLR textbook. Look at the variables defined in the `Wage` dataset.  We will be using the `wage` and `age` variables for this problem.  
 
-```{r islr_install, indent=indent1, message=F, eval=FALSE, warning=FALSE}
-library(ISLR)
-head(Wage)
-```
+    
+    ```r
+    library(ISLR)
+    head(Wage)
+    ```
 
 
     #.  Plot wages as a function of age using `ggplot`.  Your plot should include the datapoints (`geom_point()`) as well as a smooth fit to the data (`geom_smooth()`).  Based on your visualization, what is the general pattern of wages as a function of age? Does this match what you expect?
