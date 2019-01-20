@@ -12,3 +12,4 @@ forcats
 reshape2
 bindrcpp
 kableExtra
+stargazer

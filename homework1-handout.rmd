@@ -21,6 +21,7 @@ library(tidyverse)
 library(reshape2)
 library(kableExtra)
 library(stargazer)
+library(plyr)
 ```
 
 __Note:__ If you are working with a partner, please submit only one homework per group with both names and whether you are taking the course for graduate credit or not.  Submit your Rmarkdown (.Rmd) and the compiled pdf on Gauchospace.
@@ -323,6 +324,11 @@ There are 200 observations in algae.med.
 
 ```{r}
 
+algae.cor = algae %>% 
+  select(c('mxPH','mnO2','Cl','NO3','NH4',
+  'oPO4','PO4','Chla','a1','a2','a3','a4','a5', 'a6', 'a7')) %>% 
+  cor(use = "complete.obs")
+
 ```
 
 
@@ -330,7 +336,18 @@ There are 200 observations in algae.med.
         $28^{th}$ observation. What is the value you obtain? 
         
         Hint: use `lm()` and `predict()` function.
+```{r}
 
+PO.lm <- lm(PO4 ~ oPO4, data = algae %>% 
+             select(c('PO4','oPO4'))) 
+oPO4 <- algae %>% 
+  select(c('oPO4'))
+prediction28 = predict(PO.lm, oPO4[28,])
+
+prediction28
+
+```
+The model predicts a value of `r round(prediction28, 2)` units of P04 in the $28^{th}$ observation.
 
     #. **Questioning missing data assumptions**:  When might imputation using only the observed data lead you to incorrect conclusions?  In a couple of sentences, describe a scenario in which the imputed values of the chemical abundances in the algae data  (imputed using either the median or correlation method) might be a poor substitute for the true missing values.  Hint: look at the example from lecture 2.  
 
@@ -351,8 +368,15 @@ model to data that have not been used for training.
         do the following. First, use `cut(..., label=FALSE)` to divide
         observation ids (1, 2, \dots ) into equal numbers of chunk ids. Then,
         randomize output of `cut()`by using `sample()`.
-       
+ 
+```{r}
+IDs <- c(1:200)       
+IDs.cut <- cut(IDs, 5, label = FALSE) %>% 
+  sample()
+IDs.cut
 
+```
+  
 
     #. Perform 5-fold cross-validation with training error and validation
     errors of each chunk determined from \eqref{chunkids}. 
@@ -392,6 +416,28 @@ do.chunk <- function(chunkid, chunkdef, dat){  # function argument
 
         Write the code and print out the `train.error` and `val.error` five times (e.g. for each chunk).
 
+```{r}
+nfold = 5
+error.folds = NULL
+
+algae.cv = algae.med %>% 
+  select(c('mxPH','mnO2','Cl','NO3','NH4',
+  'oPO4','PO4','Chla'))
+
+tmp = ldply(1:nfold, do.chunk,
+            chunkdef=IDs.cut, dat=algae.cv)
+
+error.folds=rbind(error.folds, tmp)
+```
+
+```{r}
+
+algae.Test <- read_table2('algaeTest.txt',
+col_names=c('season','size','speed','mxPH','mnO2','Cl','NO3',
+'NH4','oPO4','PO4','Chla','a1'),
+na=c('XXXXXXX'))
+
+```
 
         
 5. **Test error on additional data**: now imagine that you actually get _new_ data that wasn't available when you first fit the model.
