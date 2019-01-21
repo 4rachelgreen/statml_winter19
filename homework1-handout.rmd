@@ -124,9 +124,11 @@ chem_vars <- algae %>%
    select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) var(x, na.rm=TRUE)) 
 
+var_mean_ratio <- chem_vars/chem_means
+
 ```
 
-The mean for NH4 is the largest, but it also has a disproportionately large variance as compared to the mean and variance coupling of other variables.
+The mean for NH4 is the largest, but it had a disproportionately large variance in observed measurements that resulted in this chemical having the largest variance to mean ratio at 7,683. PO4 had the second highest variance to mean ratio 120 followed by oPO4's variance to mean ratio of 112. These results highlight considerable variation among the measured values for NH4, PO4, and oPO4, which could be attributed to seasonal variation in uptake of these critical nutrients for algae that are more active in warmer temperatures but tend to die off in the winter. The mxPH had the smallest variance and the smallest variance to mean ratio of 0.04, which demonstrates consistency of maximum pH observed across the sample sites and seasons.
 
     #. Mean and Variance is one measure of central tendency and spread of data.
     Median and Median Absolute Deviation are alternative measures of central
@@ -148,8 +150,11 @@ chem_mads <- algae %>%
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) mad(x, na.rm=TRUE))
 
+mads_medians_ratio <- chem_mads/chem_medians
+
 ```
-    
+  
+The ratio of MAD to median for all chemicals except mxPH are smaller in magnitude than the variance to mean ratio for each parameter, respectively. For most parameters, the MAD to median was many times smaller, and in the case of NH4 there was a reduction of three orders of magnitude as compared to its variance to mean ratio. PO4 and oPO4 MAD to median ratios were two orders of magnitude smaler than variance to mean ratios. These results highlight the significant difference between the results presented through two methods of central tendency. The considerably lower MAD to median ratios demonstrates that a few outlier measurements may be causing much higher variance in the calculation of means while the calculation of MAD will not be severely influenced by outliers because the MAD is the median of the absolute difference between each measurement and the mediant of the measurements.Bearing this in mind, it is important to consider what an appropriate representation of central tendency is and determine whether or not particular measures truly are outliers or not.
 
 2. __*Data visualization*__ Most of the time, the information in the data set is also well captured graphically. Histogram, scatter plot, boxplot, Q-Q plot are frequently used tools for data visualization. Use ggplot for all of these visualizations. 
     
@@ -168,6 +173,7 @@ hist_mxPH <- ggplot(algae, aes(x = mxPH)) +
 hist_mxPH
 ```
 
+The histogram of mxPH is skewed with several more observations in the three bins immediately greater than the mean as compared to the three bins just below the mean.
         
     #. Add a density curve using `geom_density()` and rug plots using `geom_rug()` to above histogram. 
   
@@ -203,7 +209,7 @@ NO3season_boxplot
 
 ```
 
-By separating the NO3 data into seasons, we can see that there is a clear outlier in autumn that is significantly further from the Interquartile Range than outliers in other months. Note: outliers are indicated in orange. Thus, we will only consider this one autumn outlier as a true outlier. 
+By separating the NO3 data into seasons, we can see that there is a clear outlier in autumn that is significantly further from the Interquartile Range than outliers at more than four times the value measured for NO3 in other months. Note: outliers are indicated in orange. Thus, we will only consider this one autumn outlier as a true outlier. 
 
 ```{r}
 
@@ -221,10 +227,11 @@ NH4season_boxplot
 
 ```
 
+Determining the number of outliers for NH4 measurements is slightly more challenging, but splitting up the box plot into seasonal observations helps once again. There are four clear true outliers across all seasons (one in both autumn and summer, two in winter) with values above the 5000 threshold that are well beyond the range of other measurements. It also seems reasonable to count the three outlier points (one in each of autumn, summer and winter) above the ~3000 value threshold as additional true outliers. While this is a somewhat arbitrary threshold, these three points seemed similarly distinct from the other outlier points closer to the extent of the Interquartile Range. However, it is possible that the presence of these three measures of NH4 at ~3000 across three seasons may suggest that this is not an outlier but a characteristic of the study site. The remaining outlier points below NH4 = 2500 are not considered true outliers because they are not too far beyond the Interquartile Range for each season and it would be challenging to tease out any further groupings to distinguish some of these points from others as ture outliers. Thus a total of seven true outliers were chose for NH4 observations.
 
     #. Compare mean & variance vs. median & MAD for $NO3$ and $NH4$. What do you notice? Can you conclude which set of measures is more robust when outliers are present? 
 
-There is a larger difference between mean and median values for NH4 than NO3. The same pattern is true for variance and MAD, however the variance is much larger for NH4 than NO3. The median and MAD are a more appropriate measure when outliers are present because the value in autumn seems to skew our data when considered in parameters that average all values. 
+There is a larger difference between mean and median values for NH4 than NO3. The same pattern is true for variance and MAD, however the variance is much larger for NH4 than NO3. The median and MAD are a more appropriate measure when outliers are present because averaging with outliers can skew the calculation as was the case with one autumn measure of both NO3 and NH4. The outliers identified for NH4 measurements in other seasons similarly would skew the mean of this parameter. 
         
 ----------------------------------------------
     
@@ -256,11 +263,9 @@ missingvalues <- algae %>%
   'oPO4','PO4','Chla','a1','a2','a3','a4','a5', 'a6', 'a7')) %>%
   summarise_all(function(x) sum(is.na(x)))
 
-sum(missingvalues>0)
-
 ```
 
-There are 8 observations that contain missing values. 
+There are 16 observations that contain at least one missing value for a parameter with a total of 33 missing variable values across all of the observations. There is one missing value for mxPH, and two missing for each of mnO2, NO3, NH4, oPO4, and PO4. Ten values are missing for Cl and 12 are missing for Chla.
 
     #. **Removing observations with missing values**: use `filter()` function
     in `dplyr` package to observations with any missing value, and save the
@@ -276,6 +281,7 @@ algae.del <- algae %>%
 
 ```
 
+There are 184 observations in algae.del
 
 
     #. \label{imputation} **Imputing unknowns with measures of central
@@ -344,12 +350,12 @@ oPO4 <- algae %>%
   select(c('oPO4'))
 prediction28 = predict(PO.lm, oPO4[28,])
 
-prediction28
-
 ```
 The model predicts a value of `r round(prediction28, 2)` units of P04 in the $28^{th}$ observation.
 
     #. **Questioning missing data assumptions**:  When might imputation using only the observed data lead you to incorrect conclusions?  In a couple of sentences, describe a scenario in which the imputed values of the chemical abundances in the algae data  (imputed using either the median or correlation method) might be a poor substitute for the true missing values.  Hint: look at the example from lecture 2.  
+
+Imputing missing values using only observed data could lead to issues with conclusion generation if there is systemic bias to the way in which data points are missing. There could be some sort of survivorship bias in the missing values for this algae data set similar to the example given in class about using bullet hole locations in airplanes as a means of deciding where to reinforce the body of the plane. More careful examination is necessary to deduce if there is some systemic bias in the missing values in this algae data set. For example, if the data was missing for certain chemicals at one site on multiple sampling days because inclement weather and flooding during a particular season made measurements infeasible, then there could be a bias in the missing data. Imputing the missing values based on other observations would likely fail to capture the chemical composition of that river during flooding events that was directly measured.  
 
 **_Estimating the Test Error with Cross Validation (CV)_**
     
