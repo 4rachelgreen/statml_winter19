@@ -408,7 +408,7 @@ do.chunk <- function(chunkid, chunkdef, dat){  # function argument
 
     data.frame(fold = chunkid,
                train.error = mean((predYtr - Ytr)^2), # compute and store training error
-               val.error = mean((predYvl - Yvl)^2))   # compute and store test error
+               val.error = mean((predYvl - Yvl)^2)),   # compute and store test error
 
 }
 ```
@@ -426,25 +426,19 @@ do.chunk <- function(chunkid, chunkdef, dat){  # function argument
 ```{r}
 nfold = 5
 error.folds = NULL
-
-algae.cv = algae.med %>% 
-  select(c('mxPH','mnO2','Cl','NO3','NH4',
-  'oPO4','PO4','Chla'))
+lm = NULL
 
 tmp = ldply(1:nfold, do.chunk,
-            chunkdef=IDs.cut, dat=algae.cv)
+          chunkdef=IDs.cut, dat=algae.med.df)
 
 error.folds=rbind(error.folds, tmp)
-```
 
-```{r}
-
-algae.Test <- read_table2('algaeTest.txt',
-col_names=c('season','size','speed','mxPH','mnO2','Cl','NO3',
-'NH4','oPO4','PO4','Chla','a1'),
-na=c('XXXXXXX'))
+kable(error.folds, "latex", booktabs = T, 
+      caption = "Training and Validation Errors for 5-fold Cross Validation") %>%  
+      kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 
 ```
+
 
         
 5. **Test error on additional data**: now imagine that you actually get _new_ data that wasn't available when you first fit the model.
@@ -460,6 +454,13 @@ algae.Test <- read_table2('algaeTest.txt',
        
         This data was not used to train the model and was not (e.g. wasn't used in the CV procedure to estimate the test error).  We can get a more accurate measure of true test error by evaluating the model fit on this held out set of data.  Using the same linear regression model from part 4 (fit to all of the training data), calculate the "true" test error of your predictions based on the newly collected measurements in `algaeTest.txt`.  Is this roughly what you expected based on the CV estimated test error from part 4? 
        
+```{r}
+
+tmp2 = ldply(1:nfold, do.chunk,
+          chunkdef=IDs.cut, =algae.med.df)
+
+error.folds=rbind(error.folds, tmp)
+```
 
 
 **_Cross Validation (CV) for Model Selection_**

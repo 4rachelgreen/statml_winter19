@@ -228,10 +228,22 @@ is sufficient to issue the following command:
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{season_obs <-}\StringTok{ }\NormalTok{algae }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{group_by}\NormalTok{(season) }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{obs_count =} \KeywordTok{n}\NormalTok{())}
+\StringTok{  }\KeywordTok{count}\NormalTok{(}\StringTok{"season"}\NormalTok{)}
+
+\NormalTok{season_obs}
 \end{Highlighting}
 \end{Shaded}
+
+\begin{verbatim}
+##   season freq
+## 1 autumn   40
+## 2 spring   53
+## 3 summer   45
+## 4 winter   62
+\end{verbatim}
+
+There are 40 observations in autumn, 53 in spring, 45 in summer, and 62
+in winter.
 
 \begin{verbatim}
 #. Are there missing values? Calculate the mean and variance of each
@@ -280,12 +292,22 @@ are each missing 10 and 12 variables.
 \NormalTok{chem_vars <-}\StringTok{ }\NormalTok{algae }\OperatorTok{%>%}\StringTok{ }
 \StringTok{   }\KeywordTok{select}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{'mxPH'}\NormalTok{,}\StringTok{'mnO2'}\NormalTok{,}\StringTok{'Cl'}\NormalTok{,}\StringTok{'NO3'}\NormalTok{,}\StringTok{'NH4'}\NormalTok{, }\StringTok{'oPO4'}\NormalTok{,}\StringTok{'PO4'}\NormalTok{,}\StringTok{'Chla'}\NormalTok{)) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{summarise_all}\NormalTok{(}\ControlFlowTok{function}\NormalTok{ (x) }\KeywordTok{var}\NormalTok{(x, }\DataTypeTok{na.rm=}\OtherTok{TRUE}\NormalTok{)) }
+
+\NormalTok{var_mean_ratio <-}\StringTok{ }\NormalTok{chem_vars}\OperatorTok{/}\NormalTok{chem_means}
 \end{Highlighting}
 \end{Shaded}
 
-The mean for NH4 is the largest, but it also has a disproportionately
-large variance as compared to the mean and variance coupling of other
-variables.
+The mean for NH4 is the largest, but it had a disproportionately large
+variance in observed measurements that resulted in this chemical having
+the largest variance to mean ratio at 7,683. PO4 had the second highest
+variance to mean ratio 120 followed by oPO4's variance to mean ratio of
+112. These results highlight considerable variation among the measured
+values for NH4, PO4, and oPO4, which could be attributed to seasonal
+variation in uptake of these critical nutrients for algae that are more
+active in warmer temperatures but tend to die off in the winter. The
+mxPH had the smallest variance and the smallest variance to mean ratio
+of 0.04, which demonstrates consistency of maximum pH observed across
+the sample sites and seasons.
 
 \begin{verbatim}
 #. Mean and Variance is one measure of central tendency and spread of data.
@@ -327,8 +349,27 @@ tendency and spread.
 \NormalTok{chem_mads <-}\StringTok{ }\NormalTok{algae }\OperatorTok{%>%}\StringTok{ }
 \StringTok{  }\KeywordTok{select}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{'mxPH'}\NormalTok{,}\StringTok{'mnO2'}\NormalTok{,}\StringTok{'Cl'}\NormalTok{,}\StringTok{'NO3'}\NormalTok{,}\StringTok{'NH4'}\NormalTok{, }\StringTok{'oPO4'}\NormalTok{,}\StringTok{'PO4'}\NormalTok{,}\StringTok{'Chla'}\NormalTok{)) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{summarise_all}\NormalTok{(}\ControlFlowTok{function}\NormalTok{ (x) }\KeywordTok{mad}\NormalTok{(x, }\DataTypeTok{na.rm=}\OtherTok{TRUE}\NormalTok{))}
+
+\NormalTok{mads_medians_ratio <-}\StringTok{ }\NormalTok{chem_mads}\OperatorTok{/}\NormalTok{chem_medians}
 \end{Highlighting}
 \end{Shaded}
+
+The ratio of MAD to median for all chemicals except mxPH are smaller in
+magnitude than the variance to mean ratio for each parameter,
+respectively. For most parameters, the MAD to median was many times
+smaller, and in the case of NH4 there was a reduction of three orders of
+magnitude as compared to its variance to mean ratio. PO4 and oPO4 MAD to
+median ratios were two orders of magnitude smaler than variance to mean
+ratios. These results highlight the significant difference between the
+results presented through two methods of central tendency. The
+considerably lower MAD to median ratios demonstrates that a few outlier
+measurements may be causing much higher variance in the calculation of
+means while the calculation of MAD will not be severely influenced by
+outliers because the MAD is the median of the absolute difference
+between each measurement and the mediant of the measurements.Bearing
+this in mind, it is important to consider what an appropriate
+representation of central tendency is and determine whether or not
+particular measures truly are outliers or not.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -374,19 +415,15 @@ tendency and spread.
 
 \begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-1-1} \end{center}
 
-\begin{enumerate}
-\item
-  Add a density curve using \texttt{geom\_density()} and rug plots using
-  \texttt{geom\_rug()} to above histogram.
+The histogram of mxPH is skewed with several more observations in the
+three bins immediately greater than the mean as compared to the three
+bins just below the mean.
 
-  \begin{enumerate}
-  \tightlist
-  \item
-    Create a boxplot with the title `A conditioned Boxplot of Algal
-    \(a_1\)' for \(a_1\) grouped by \(size\). (Refer to help page for
-    \texttt{geom\_boxplot()}).
-  \end{enumerate}
-\end{enumerate}
+\begin{verbatim}
+#. Add a density curve using `geom_density()` and rug plots using `geom_rug()` to above histogram. 
+
+#. Create a boxplot with the title 'A conditioned Boxplot of Algal $a_1$' for $a_1$ grouped by $size$. (Refer to help page for `geom_boxplot()`). 
+\end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -441,9 +478,10 @@ tendency and spread.
 
 By separating the NO3 data into seasons, we can see that there is a
 clear outlier in autumn that is significantly further from the
-Interquartile Range than outliers in other months. Note: outliers are
-indicated in orange. Thus, we will only consider this one autumn outlier
-as a true outlier.
+Interquartile Range than outliers at more than four times the value
+measured for NO3 in other months. Note: outliers are indicated in
+orange. Thus, we will only consider this one autumn outlier as a true
+outlier.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -477,20 +515,38 @@ as a true outlier.
 
 \begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-3-2} \end{center}
 
-\begin{enumerate}
-\tightlist
-\item
-  Compare mean \& variance vs.~median \& MAD for \(NO3\) and \(NH4\).
-  What do you notice? Can you conclude which set of measures is more
-  robust when outliers are present?
-\end{enumerate}
+Determining the number of outliers for NH4 measurements is slightly more
+challenging, but splitting up the box plot into seasonal observations
+helps once again. There are four clear true outliers across all seasons
+(one in both autumn and summer, two in winter) with values above the
+5000 threshold that are well beyond the range of other measurements. It
+also seems reasonable to count the three outlier points (one in each of
+autumn, summer and winter) above the \textasciitilde{}3000 value
+threshold as additional true outliers. While this is a somewhat
+arbitrary threshold, these three points seemed similarly distinct from
+the other outlier points closer to the extent of the Interquartile
+Range. However, it is possible that the presence of these three measures
+of NH4 at \textasciitilde{}3000 across three seasons may suggest that
+this is not an outlier but a characteristic of the study site. The
+remaining outlier points below NH4 = 2500 are not considered true
+outliers because they are not too far beyond the Interquartile Range for
+each season and it would be challenging to tease out any further
+groupings to distinguish some of these points from others as ture
+outliers. Thus a total of seven true outliers were chose for NH4
+observations.
+
+\begin{verbatim}
+#. Compare mean & variance vs. median & MAD for $NO3$ and $NH4$. What do you notice? Can you conclude which set of measures is more robust when outliers are present? 
+\end{verbatim}
 
 There is a larger difference between mean and median values for NH4 than
 NO3. The same pattern is true for variance and MAD, however the variance
 is much larger for NH4 than NO3. The median and MAD are a more
-appropriate measure when outliers are present because the value in
-autumn seems to skew our data when considered in parameters that average
-all values.
+appropriate measure when outliers are present because averaging with
+outliers can skew the calculation as was the case with one autumn
+measure of both NO3 and NH4. The outliers identified for NH4
+measurements in other seasons similarly would skew the mean of this
+parameter.
 
 \begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
 
@@ -529,16 +585,14 @@ cross-validation in the next problem.
 \StringTok{  }\KeywordTok{select}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{'season'}\NormalTok{,}\StringTok{'size'}\NormalTok{,}\StringTok{'speed'}\NormalTok{,}\StringTok{'mxPH'}\NormalTok{,}\StringTok{'mnO2'}\NormalTok{,}\StringTok{'Cl'}\NormalTok{,}\StringTok{'NO3'}\NormalTok{,}\StringTok{'NH4'}\NormalTok{,}
   \StringTok{'oPO4'}\NormalTok{,}\StringTok{'PO4'}\NormalTok{,}\StringTok{'Chla'}\NormalTok{,}\StringTok{'a1'}\NormalTok{,}\StringTok{'a2'}\NormalTok{,}\StringTok{'a3'}\NormalTok{,}\StringTok{'a4'}\NormalTok{,}\StringTok{'a5'}\NormalTok{, }\StringTok{'a6'}\NormalTok{, }\StringTok{'a7'}\NormalTok{)) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{summarise_all}\NormalTok{(}\ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{sum}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(x)))}
-
-\KeywordTok{sum}\NormalTok{(missingvalues}\OperatorTok{>}\DecValTok{0}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-## [1] 8
-\end{verbatim}
-
-There are 8 observations that contain missing values.
+There are 16 observations that contain at least one missing value for a
+parameter with a total of 33 missing variable values across all of the
+observations. There is one missing value for mxPH, and two missing for
+each of mnO2, NO3, NH4, oPO4, and PO4. Ten values are missing for Cl and
+12 are missing for Chla.
 
 \begin{verbatim}
 #. **Removing observations with missing values**: use `filter()` function
@@ -555,6 +609,8 @@ observations are in `algae.del`.
 \StringTok{  }\KeywordTok{filter_all}\NormalTok{(}\KeywordTok{all_vars}\NormalTok{(}\OperatorTok{!}\KeywordTok{is.na}\NormalTok{(.)))}
 \end{Highlighting}
 \end{Shaded}
+
+There are 184 observations in algae.del
 
 \begin{verbatim}
 #. \label{imputation} **Imputing unknowns with measures of central
@@ -626,18 +682,55 @@ predicting one based on the other with a simple linear regression model,
 provided the two variables are not both unknown. 
 
     Compute pairwise correlation between the continuous (chemical) variables. 
+\end{verbatim}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{algae.cor =}\StringTok{ }\NormalTok{algae }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{select}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{'mxPH'}\NormalTok{,}\StringTok{'mnO2'}\NormalTok{,}\StringTok{'Cl'}\NormalTok{,}\StringTok{'NO3'}\NormalTok{,}\StringTok{'NH4'}\NormalTok{,}
+  \StringTok{'oPO4'}\NormalTok{,}\StringTok{'PO4'}\NormalTok{,}\StringTok{'Chla'}\NormalTok{,}\StringTok{'a1'}\NormalTok{,}\StringTok{'a2'}\NormalTok{,}\StringTok{'a3'}\NormalTok{,}\StringTok{'a4'}\NormalTok{,}\StringTok{'a5'}\NormalTok{, }\StringTok{'a6'}\NormalTok{, }\StringTok{'a7'}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{cor}\NormalTok{(}\DataTypeTok{use =} \StringTok{"complete.obs"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
 
-
-
+\begin{verbatim}
     Then, fill in the missing value for `PO4` based on `oPO4` in the
     $28^{th}$ observation. What is the value you obtain? 
     
     Hint: use `lm()` and `predict()` function.
+\end{verbatim}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{PO.lm <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(PO4 }\OperatorTok{~}\StringTok{ }\NormalTok{oPO4, }\DataTypeTok{data =}\NormalTok{ algae }\OperatorTok{%>%}\StringTok{ }
+\StringTok{             }\KeywordTok{select}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{'PO4'}\NormalTok{,}\StringTok{'oPO4'}\NormalTok{))) }
+\NormalTok{oPO4 <-}\StringTok{ }\NormalTok{algae }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{select}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\StringTok{'oPO4'}\NormalTok{))}
+\NormalTok{prediction28 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(PO.lm, oPO4[}\DecValTok{28}\NormalTok{,])}
+\end{Highlighting}
+\end{Shaded}
 
+The model predicts a value of 48.07 units of P04 in the \(28^{th}\)
+observation.
+
+\begin{verbatim}
 #. **Questioning missing data assumptions**:  When might imputation using only the observed data lead you to incorrect conclusions?  In a couple of sentences, describe a scenario in which the imputed values of the chemical abundances in the algae data  (imputed using either the median or correlation method) might be a poor substitute for the true missing values.  Hint: look at the example from lecture 2.  
 \end{verbatim}
+
+Imputing missing values using only observed data could lead to issues
+with conclusion generation if there is systemic bias to the way in which
+data points are missing. There could be some sort of survivorship bias
+in the missing values for this algae data set similar to the example
+given in class about using bullet hole locations in airplanes as a means
+of deciding where to reinforce the body of the plane. More careful
+examination is necessary to deduce if there is some systemic bias in the
+missing values in this algae data set. For example, if the data was
+missing for certain chemicals at one site on multiple sampling days
+because inclement weather and flooding during a particular season made
+measurements infeasible, then there could be a bias in the missing data.
+Imputing the missing values based on other observations would likely
+fail to capture the chemical composition of that river during flooding
+events that was directly measured.
 
 \textbf{\emph{Estimating the Test Error with Cross Validation (CV)}}
 
@@ -673,50 +766,136 @@ generalization of model to data that have not been used for training.
     divide observation ids (1, 2, \dots ) into equal numbers of chunk
     ids. Then, randomize output of \texttt{cut()}by using
     \texttt{sample()}.
-  \item
-    Perform 5-fold cross-validation with training error and validation
-    errors of each chunk determined from \eqref{chunkids}.
-
-    Since same computation is repeated 5 times, we can define the
-    following function for simplicity.
+  \end{enumerate}
+\end{enumerate}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{do.chunk <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(chunkid, chunkdef, dat)\{  }\CommentTok{# function argument}
-
-\NormalTok{    train =}\StringTok{ }\NormalTok{(chunkdef }\OperatorTok{!=}\StringTok{ }\NormalTok{chunkid)}
-
-\NormalTok{    Xtr =}\StringTok{ }\NormalTok{dat[train,}\DecValTok{1}\OperatorTok{:}\DecValTok{11}\NormalTok{]  }\CommentTok{# get training set}
-\NormalTok{    Ytr =}\StringTok{ }\NormalTok{dat[train,}\DecValTok{12}\NormalTok{]  }\CommentTok{# get true response values in trainig set}
-
-\NormalTok{    Xvl =}\StringTok{ }\NormalTok{dat[}\OperatorTok{!}\NormalTok{train,}\DecValTok{1}\OperatorTok{:}\DecValTok{11}\NormalTok{]  }\CommentTok{# get validation set}
-\NormalTok{    Yvl =}\StringTok{ }\NormalTok{dat[}\OperatorTok{!}\NormalTok{train,}\DecValTok{12}\NormalTok{]  }\CommentTok{# get true response values in validation set}
-
-\NormalTok{    lm.a1 <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(a1}\OperatorTok{~}\NormalTok{., }\DataTypeTok{data =}\NormalTok{ dat[train,}\DecValTok{1}\OperatorTok{:}\DecValTok{12}\NormalTok{])}
-\NormalTok{    predYtr =}\StringTok{ }\KeywordTok{predict}\NormalTok{(lm.a1)  }\CommentTok{# predict training values}
-\NormalTok{    predYvl =}\StringTok{ }\KeywordTok{predict}\NormalTok{(lm.a1,Xvl)  }\CommentTok{# predict validation values}
-
-    \KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{fold =}\NormalTok{ chunkid,}
-               \DataTypeTok{train.error =} \KeywordTok{mean}\NormalTok{((predYtr }\OperatorTok{-}\StringTok{ }\NormalTok{Ytr)}\OperatorTok{^}\DecValTok{2}\NormalTok{), }\CommentTok{# compute and store training error}
-               \DataTypeTok{val.error =} \KeywordTok{mean}\NormalTok{((predYvl }\OperatorTok{-}\StringTok{ }\NormalTok{Yvl)}\OperatorTok{^}\DecValTok{2}\NormalTok{))   }\CommentTok{# compute and store test error}
-
-\NormalTok{\}}
+\NormalTok{IDs <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{200}\NormalTok{)       }
+\NormalTok{IDs.cut <-}\StringTok{ }\KeywordTok{cut}\NormalTok{(IDs, }\DecValTok{5}\NormalTok{, }\DataTypeTok{label =} \OtherTok{FALSE}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{sample}\NormalTok{()}
+\NormalTok{IDs.cut}
 \end{Highlighting}
 \end{Shaded}
 
-    First argument \texttt{chunkid} indicates which chunk to use as
-    validation set (one of 1:5). Second argument \texttt{chunkdef} is
-    chunk assignments from \eqref{chunkids}. Third argument \texttt{dat}
-    will be \texttt{algae.med} dataset.
+\begin{verbatim}
+##   [1] 1 3 3 3 2 1 4 5 5 2 3 4 1 1 5 4 5 2 2 5 5 4 1 2 5 4 2 5 2 2 1 1 1 3 1
+##  [36] 1 2 1 2 3 1 1 3 3 3 1 1 4 2 2 4 1 5 5 1 5 2 2 5 5 4 3 1 3 5 2 5 5 5 5
+##  [71] 4 1 2 1 3 3 5 4 5 1 4 4 4 3 5 5 2 4 3 3 4 1 5 5 4 1 3 4 4 3 3 3 4 3 3
+## [106] 5 3 5 3 2 4 3 5 2 5 4 3 1 5 4 1 3 1 5 4 3 1 1 4 4 1 2 4 3 3 3 5 3 2 2
+## [141] 4 2 1 3 2 5 1 2 3 2 4 3 5 1 2 5 3 4 4 3 1 4 2 2 1 4 3 3 2 3 4 4 2 5 2
+## [176] 5 5 1 4 2 2 1 2 4 1 4 4 2 2 1 4 1 2 5 1 2 4 5 5 2
+\end{verbatim}
 
-    In order to repeatedly call \texttt{do.chunk()} for each value of
-    \texttt{chunkid}, use functions \texttt{lapply()} or
-    \texttt{ldply()}. Note that \texttt{chunkdef} and \texttt{dat}
+\begin{verbatim}
+#. Perform 5-fold cross-validation with training error and validation
+errors of each chunk determined from \eqref{chunkids}. 
+
+    Since same computation is repeated 5 times, we can define the following
+    function for simplicity.
+
+
+    ```r
+    do.chunk <- function(chunkid, chunkdef, dat){  # function argument
+      
+        train = (chunkdef != chunkid)
+    
+        Xtr = dat[train,1:11]  # get training set
+        Ytr = dat[train,12]  # get true response values in trainig set
+    
+        Xvl = dat[!train,1:11]  # get validation set
+        Yvl = dat[!train,12]  # get true response values in validation set
+    
+        lm.a1 <- lm(a1~., data = dat[train,1:12])
+        predYtr = predict(lm.a1)  # predict training values
+        predYvl = predict(lm.a1,Xvl)  # predict validation values
+    
+        data.frame(fold = chunkid,
+                   train.error = mean((predYtr - Ytr)^2), # compute and store training error
+                   val.error = mean((predYvl - Yvl)^2))   # compute and store test error
+    
+    }
+    ```
+    
+    First argument `chunkid` indicates which chunk to use as validation set
+    (one of 1:5). Second argument `chunkdef` is chunk assignments from
+    \eqref{chunkids}. Third argument `dat` will be `algae.med` dataset.
+    
+    In order to repeatedly call `do.chunk()` for each value of `chunkid`,
+    use functions `lapply()` or `ldply()`. Note that `chunkdef` and `dat`
     should be passed in as optional arguments (refer to help pages).
 
-    Write the code and print out the \texttt{train.error} and
-    \texttt{val.error} five times (e.g.~for each chunk).
-  \end{enumerate}
+    Write the code and print out the `train.error` and `val.error` five times (e.g. for each chunk).
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{nfold =}\StringTok{ }\DecValTok{5}
+\NormalTok{error.folds =}\StringTok{ }\OtherTok{NULL}
+
+\NormalTok{algae.med.df =}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(algae.med)}
+
+\NormalTok{allK =}\StringTok{ }\DecValTok{1}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{555}\NormalTok{)}
+
+\NormalTok{tmp =}\StringTok{ }\KeywordTok{ldply}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\NormalTok{nfold, do.chunk,}
+          \DataTypeTok{chunkdef=}\NormalTok{IDs.cut, }\DataTypeTok{dat=}\NormalTok{algae.med.df)}
+
+\NormalTok{error.folds=}\KeywordTok{rbind}\NormalTok{(error.folds, tmp)}
+
+\KeywordTok{kable}\NormalTok{(error.folds, }\StringTok{"latex"}\NormalTok{, }\DataTypeTok{booktabs =}\NormalTok{ T, }
+      \DataTypeTok{caption =} \StringTok{"Training and Validation Errors for 5-fold Cross Validation"}\NormalTok{) }\OperatorTok{%>%}\StringTok{  }
+\StringTok{      }\KeywordTok{kable_styling}\NormalTok{(}\DataTypeTok{bootstrap_options =} \StringTok{"striped"}\NormalTok{, }\DataTypeTok{full_width =}\NormalTok{ F, }\DataTypeTok{position =} \StringTok{"center"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-9}Training and Validation Errors for 5-fold Cross Validation}
+\centering
+\begin{tabular}[t]{rrr}
+\toprule
+fold & train.error & val.error\\
+\midrule
+1 & 267.7011 & 386.9186\\
+2 & 276.5036 & 346.3671\\
+3 & 316.3755 & 193.6436\\
+4 & 273.2023 & 347.5212\\
+5 & 276.0718 & 509.0541\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{algae.Test <-}\StringTok{ }\KeywordTok{read_table2}\NormalTok{(}\StringTok{'algaeTest.txt'}\NormalTok{,}
+\DataTypeTok{col_names=}\KeywordTok{c}\NormalTok{(}\StringTok{'season'}\NormalTok{,}\StringTok{'size'}\NormalTok{,}\StringTok{'speed'}\NormalTok{,}\StringTok{'mxPH'}\NormalTok{,}\StringTok{'mnO2'}\NormalTok{,}\StringTok{'Cl'}\NormalTok{,}\StringTok{'NO3'}\NormalTok{,}
+\StringTok{'NH4'}\NormalTok{,}\StringTok{'oPO4'}\NormalTok{,}\StringTok{'PO4'}\NormalTok{,}\StringTok{'Chla'}\NormalTok{,}\StringTok{'a1'}\NormalTok{),}
+\DataTypeTok{na=}\KeywordTok{c}\NormalTok{(}\StringTok{'XXXXXXX'}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Parsed with column specification:
+## cols(
+##   season = col_character(),
+##   size = col_character(),
+##   speed = col_character(),
+##   mxPH = col_double(),
+##   mnO2 = col_double(),
+##   Cl = col_double(),
+##   NO3 = col_double(),
+##   NH4 = col_double(),
+##   oPO4 = col_double(),
+##   PO4 = col_double(),
+##   Chla = col_double(),
+##   a1 = col_double()
+## )
+\end{verbatim}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{4}
 \item
   \textbf{Test error on additional data}: now imagine that you actually
   get \emph{new} data that wasn't available when you first fit the
