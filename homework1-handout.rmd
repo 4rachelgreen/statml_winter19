@@ -92,11 +92,12 @@ glimpse(algae)
 ```{r count by season}
 
 season_obs <- algae %>% 
-  group_by(season) %>% 
-  summarize(obs_count = n())
-  
-```
+  count("season")
 
+season_obs
+
+```
+There are 40 observations in autumn, 53 in spring, 45 in summer, and 62 in winter.
 
     #. Are there missing values? Calculate the mean and variance of each
     chemical (Ignore $a_1$ through $a_7$). What do you notice about the
