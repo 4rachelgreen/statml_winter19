@@ -458,8 +458,20 @@ algae.Test <- read_table2('algaeTest.txt',
 ```{r}
 # Evaluate fit of previous model against new algae.Test data
 
-```
+# The error results from Question 4 part B help to identify that there is the smallest validation error when 3rd fold is used to validate the model
 
+# re-train a model on all of the original dataset
+lm.a1.full <- lm(a1~., data = algae.med.df[1:12]) # should this include the a1 column?
+
+# predict the model output for algae a1 using the new algae.Test data that wasn't used to create the model
+predYvl = predict(lm.a1.full,algae.Test)  # predict validation values
+val.a1 = algae.Test$a1 # actual values of a1 in validation (algae.Test) data frame
+
+val.error.data = mean((predYvl - val.a1)^2) # compute and store test error
+
+val.error.data
+```
+When predictions for a1 are made using a linear model trained on the original data set and the new algae.Test data, a validation error is found to be 250.18. The smallest validation error found in Question 4b was when the third fold is used to validate the model and that was a value of 205.64. It is not surprising that the validation error calculated when using a test data set separate from the training data (Q5) is larger than the smallest validation error found in the five-fold CV analysis (Q4b). When validation data came from the same sample as the training data, it would probably have less variation between the data used to train versus the variation between training data and separately collected data set. Despite the fact that the validation error when using a separate data set for testing is larger than the least validation error found with one of the models from Q4b, the mean validation error from Q4b is 354.70, so the validation error using the separate test data Q5 is actually smaller.
 
 **_Cross Validation (CV) for Model Selection_**
 
@@ -496,47 +508,45 @@ wage.obs <- c(1:3000)
 wages.cut <- cut(wage.obs, 5, label = FALSE) %>% 
   sample()
 
-# this doesn't work feel free to change any of this code chunk
-do.poly <- function(chunkid, chunkdef, dat, p){  # function argument
+age_predictors <- poly(Wage$age, degree=10, raw=TRUE)
+
+age.pred.df <- as.data.frame(age_predictors) %>% 
+    cbind(wage = Wage$wage)
+
+age.pred.df <- age.pred.df[c('wage', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10')]
+```
+
+```{r}
+do.wage <- function(chunkid, chunkdef, dat){  # function argument
     
     train = (chunkdef != chunkid)
     
-    predictors <- poly(dat, degree=p, raw=TRUE)
-    
-    Xtr = predictors[train,1:(p-1)]  # get training set
-    Ytr = predictors[train,p]  # get true response values in trainig set
+    Xtr = dat[train,1:10]  # get training set
+    Ytr = dat[train,11]  # get true response values in trainig set
 
-    Xvl = predictors[!train,1:(p-1)]  # get validation set
-    Yvl = predictors[!train,p]  # get true response values in validation set
+    Xvl = dat[!train,1:10]  # get validation set
+    Yvl = dat[!train,11]  # get true response values in validation set
 
-    poly.wage <- lm(wage ~ predictors, data = Wage)
+    lm.wage <- lm(wage~., data = dat[train,1:11] )
     
-    predYtr = predict(poly.wage)  # predict training values
-    predYvl = predict(poly.wage,Xvl)  # predict validation values
+    predYtr = predict(lm.wage)  # predict training values
+    predYvl = predict(lm.wage,Xvl)  # predict validation values
 
     data.frame(fold = chunkid,
                train.error = mean((predYtr - Ytr)^2), # compute and store training error
                val.error = mean((predYvl - Yvl)^2)) # compute and store test error
 
-}
-
 
 ```
 
+
 ```{r}
 error.folds.wages = NULL
-allP = 1:10
 
-set.seed(888)
-
-for (j in allP){
+tmp.wage = ldply(1:nfold, do.wage,
+    chunkdef=wages.cut, dat=age.pred.df)
   
-  tmp.wage = ldply(1:nfold, do.poly,
-    chunkdef=wage.obs, dat=Wage$age, p=j)
-  
-  error.folds=rbind(error.folds.wages, tmp.wage)
-  
-}
+error.folds.wages=rbind(error.folds.wages, tmp.wage)
 ```
 
     #. Plot both the test error and training error (on the same plot) for each of the models estimated above as a function of $p$.  What do you observe about the training error as $p$ increases? What about the test error? Based on your results, which model should you select and why?
