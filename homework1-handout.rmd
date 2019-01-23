@@ -470,6 +470,7 @@ val.a1 = algae.Test$a1 # actual values of a1 in validation (algae.Test) data fra
 val.error.data = mean((predYvl - val.a1)^2) # compute and store test error
 
 val.error.data
+
 ```
 When predictions for a1 are made using a linear model trained on the original data set and the new algae.Test data, a validation error is found to be 250.18. The smallest validation error found in Question 4b was when the third fold is used to validate the model and that was a value of 205.64. It is not surprising that the validation error calculated when using a test data set separate from the training data (Q5) is larger than the smallest validation error found in the five-fold CV analysis (Q4b). When validation data came from the same sample as the training data, it would probably have less variation between the data used to train versus the variation between training data and separately collected data set. Despite the fact that the validation error when using a separate data set for testing is larger than the least validation error found with one of the models from Q4b, the mean validation error from Q4b is 354.70, so the validation error using the separate test data Q5 is actually smaller.
 
@@ -513,7 +514,6 @@ age_predictors <- poly(Wage$age, degree=10, raw=TRUE)
 age.pred.df <- as.data.frame(age_predictors) %>% 
     cbind(wage = Wage$wage)
 
-age.pred.df <- age.pred.df[c('wage', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10')]
 ```
 
 ```{r}
@@ -536,7 +536,7 @@ do.wage <- function(chunkid, chunkdef, dat){  # function argument
                train.error = mean((predYtr - Ytr)^2), # compute and store training error
                val.error = mean((predYvl - Yvl)^2)) # compute and store test error
 
-
+}
 ```
 
 
@@ -547,6 +547,13 @@ tmp.wage = ldply(1:nfold, do.wage,
     chunkdef=wages.cut, dat=age.pred.df)
   
 error.folds.wages=rbind(error.folds.wages, tmp.wage)
+
+wage.error.Melted <- reshape2::melt(error.folds.wages, id.var='fold')
+
+wage.error.plot <- ggplot() +
+  geom_line(data = wage.error.Melted, aes(x = fold, y = value, col = variable)) 
+
+wage.error.plot
 ```
 
     #. Plot both the test error and training error (on the same plot) for each of the models estimated above as a function of $p$.  What do you observe about the training error as $p$ increases? What about the test error? Based on your results, which model should you select and why?
