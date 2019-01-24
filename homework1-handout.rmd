@@ -22,6 +22,9 @@ library(reshape2)
 library(kableExtra)
 library(stargazer)
 library(plyr)
+library(boot)
+library(dplyr)
+library(class)
 ```
 
 __Note:__ If you are working with a partner, please submit only one homework per group with both names and whether you are taking the course for graduate credit or not.  Submit your Rmarkdown (.Rmd) and the compiled pdf on Gauchospace.
@@ -504,60 +507,142 @@ There is a general pattern of increasing wage with age until it peaks in the ear
         
         #.  Use 5-fold cross validation to estimate the test error for this model. Save both the test error and the training error.  
          
+
+
 ```{r}
-wage.obs <- c(1:3000)       
-wages.cut <- cut(wage.obs, 5, label = FALSE) %>% 
-  sample()
+set.seed(20)
+cv.error.5=rep(0,5)
+for(i in 1:10){
+  glm.fit=glm(wage~poly(age, i, raw=TRUE), data = Wage)
+  cv.error.5[i]= cv.glm(Wage, glm.fit,K=5)$delta[1]
+}
+cv.error.5 <- as.data.frame(cv.error.5)
+```
 
-age_predictors <- poly(Wage$age, degree=10, raw=TRUE)
 
-age.pred.df <- as.data.frame(age_predictors) %>% 
-    cbind(wage = Wage$wage)
+```{r}
+do.wage <- function(chunkid, chunkdef, p){  # function argument
+    
+    train = (chunkdef != chunkid)
+    if (p == 1){
 
+      predictors.df <- as.data.frame(cbind("1" = Wage$age, wage = Wage$wage))
+      
+      Xtr = as.data.frame(predictors.df[train,1])  # get training set
+      Ytr = predictors.df[train,2]  # get true response values in trainig set
+  
+      Xvl = as.data.frame(predictors.df[!train,1])  # get validation set
+      Yvl = predictors.df[!train,2]  # get true response values in validation set
+      
+      lm.wage <- lm(wage~., data = predictors.df[train,1:2])
+      
+      predYtr = predict(lm.wage)  # predict training values
+      predYvl = predict(lm.wage,Xvl)  # predict validation values
+ 
+      data.frame(degree = p,
+               fold = chunkid,
+               train.error = mean((predYtr - Ytr)^2), # compute and store training error
+               val.error = mean((predYvl - Yvl)^2)) # compute and store test error
+    }else{
+      predictors <- poly(Wage$age, p, raw = TRUE) %>% 
+      cbind(wage = Wage$wage)
+    
+      predictors.df <- as.data.frame(predictors)
+    
+      Xtr = predictors.df[train,1:p]  # get training set
+      Ytr = predictors.df[train,p+1]  # get true response values in trainig set
+
+      Xvl = as.data.frame(predictors.df[!train,1:p])  # get validation set
+      Yvl = predictors.df[!train,p+1]  # get true response values in validation set
+      
+      lm.wage <- lm(wage~., data = predictors.df[train,1:ncol(predictors.df)])
+    
+      predYtr = predict(lm.wage)  # predict training values
+      predYvl = predict(lm.wage,Xvl)  # predict validation values
+ 
+      data.frame(degree = p,
+               fold = chunkid,
+               train.error = mean((predYtr - Ytr)^2), # compute and store training error
+               val.error = mean((predYvl - Yvl)^2)) # compute and store test error
+    }
+    
+
+
+}
 ```
 
 ```{r}
-do.wage <- function(chunkid, chunkdef, dat){  # function argument
-    
-    train = (chunkdef != chunkid)
-    
-    Xtr = dat[train,1:10]  # get training set
-    Ytr = dat[train,11]  # get true response values in trainig set
+predictors <- poly(Wage$age, 10, raw = TRUE) %>% 
+      cbind(wage = Wage$wage)
 
-    Xvl = dat[!train,1:10]  # get validation set
-    Yvl = dat[!train,11]  # get true response values in validation set
+predictors.df <- as.data.frame(predictors)
+```
 
-    lm.wage <- lm(wage~., data = dat[train,1:11] )
+```{r}
+
+do.wage <- function(chunkid, chunkdef, p){  # function argument
     
-    predYtr = predict(lm.wage)  # predict training values
-    predYvl = predict(lm.wage,Xvl)  # predict validation values
+      train = (chunkdef != chunkid)
+    
+      Xtr = as.data.frame(predictors.df[train,1:p])  # get training set
+      Ytr = predictors.df[train,11]  # get true response values in trainig set
 
-    data.frame(fold = chunkid,
+      Xvl = as.data.frame(predictors.df[!train,1:p])  # get validation set
+      Yvl = predictors.df[!train,11]  # get true response values in validation set
+      
+      lm.wage <- lm(wage~., data = predictors.df[train,1:p])
+    
+      predYtr = predict(lm.wage)  # predict training values
+      predYvl = predict(lm.wage,Xvl)  # predict validation values
+ 
+      data.frame(degree = p,
+               fold = chunkid,
                train.error = mean((predYtr - Ytr)^2), # compute and store training error
                val.error = mean((predYvl - Yvl)^2)) # compute and store test error
+    
 
 }
 ```
 
 
 ```{r}
-error.folds.wages = NULL
+nfold = 5
 
-tmp.wage = ldply(1:nfold, do.wage,
-    chunkdef=wages.cut, dat=age.pred.df)
+folds <- cut(1:nrow(Wage), nfold, label = FALSE) %>% 
+  sample()
+
+error.folds.wages1 = data.frame()
+error.folds.wages = data.frame()
+
+allP = 1:10
+
+set.seed(5555)
+
+for (j in 1:10){
+  tmp.wage = ldply(1:nfold, do.wage,
+    chunkdef=folds, p = j)
   
-error.folds.wages=rbind(error.folds.wages, tmp.wage)
+  error.folds.wages = rbind(error.folds.wages, tmp.wage)
+}
 
-wage.error.Melted <- reshape2::melt(error.folds.wages, id.var='fold')
+error.folds.wages
 
-wage.error.plot <- ggplot() +
-  geom_line(data = wage.error.Melted, aes(x = fold, y = value, col = variable)) 
 
-wage.error.plot
 ```
 
     #. Plot both the test error and training error (on the same plot) for each of the models estimated above as a function of $p$.  What do you observe about the training error as $p$ increases? What about the test error? Based on your results, which model should you select and why?
     
+```{r}
+
+error.wages.melt = melt(error.folds.wages, id=c("degree","fold")) %>% 
+  group_by(degree)
+
+wage.error.plot <- ggplot() +
+  geom_line(data = error.wages.melt, aes(x = fold, y = value, col = variable)) +
+  facet_wrap(~degree)
+
+wage.error.plot
+```
 
       Note: `poly(age, degree=p, raw=TRUE)` will return a matrix with $p$ columns, where the $p$-th column is $age^p$.  For the predictors in your regression use `poly(age, degree=p, raw=FALSE)`.  The `raw=FALSE` option returns predictors which are numerically more stable (it returns a matrix of "orthogonal polynomials").  Numerical stability can be an issue because $age^p$ can be very very large if $p$ is large.  The orthogonal polynomials returned when `raw=FALSE` are rescaled to account for this so please use the `raw=FALSE` option.   
       Hint: A function similar to `do.chunk` from problem 4 will be helpful here as well.   
