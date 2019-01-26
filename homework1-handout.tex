@@ -812,7 +812,7 @@ errors of each chunk determined from \eqref{chunkids}.
     
         data.frame(fold = chunkid,
                    train.error = mean((predYtr - Ytr)^2), # compute and store training error
-                   val.error = mean((predYvl - Yvl)^2))   # compute and store test error
+                   val.error = mean((predYvl - Yvl)^2)) # compute and store test error
     
     }
     ```
@@ -835,8 +835,7 @@ errors of each chunk determined from \eqref{chunkids}.
 
 \NormalTok{algae.med.df =}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(algae.med)}
 
-\NormalTok{allK =}\StringTok{ }\DecValTok{1}
-\KeywordTok{set.seed}\NormalTok{(}\DecValTok{555}\NormalTok{)}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{654}\NormalTok{)}
 
 \NormalTok{tmp =}\StringTok{ }\KeywordTok{ldply}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\NormalTok{nfold, do.chunk,}
           \DataTypeTok{chunkdef=}\NormalTok{IDs.cut, }\DataTypeTok{dat=}\NormalTok{algae.med.df)}
@@ -868,30 +867,10 @@ fold & train.error & val.error\\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{algae.Test <-}\StringTok{ }\KeywordTok{read_table2}\NormalTok{(}\StringTok{'algaeTest.txt'}\NormalTok{,}
-\DataTypeTok{col_names=}\KeywordTok{c}\NormalTok{(}\StringTok{'season'}\NormalTok{,}\StringTok{'size'}\NormalTok{,}\StringTok{'speed'}\NormalTok{,}\StringTok{'mxPH'}\NormalTok{,}\StringTok{'mnO2'}\NormalTok{,}\StringTok{'Cl'}\NormalTok{,}\StringTok{'NO3'}\NormalTok{,}
-\StringTok{'NH4'}\NormalTok{,}\StringTok{'oPO4'}\NormalTok{,}\StringTok{'PO4'}\NormalTok{,}\StringTok{'Chla'}\NormalTok{,}\StringTok{'a1'}\NormalTok{),}
-\DataTypeTok{na=}\KeywordTok{c}\NormalTok{(}\StringTok{'XXXXXXX'}\NormalTok{))}
+\NormalTok{mean.val =}\StringTok{ }\KeywordTok{mean}\NormalTok{(error.folds}\OperatorTok{$}\NormalTok{val.error)}
+\NormalTok{mean.train =}\StringTok{ }\KeywordTok{mean}\NormalTok{(error.folds}\OperatorTok{$}\NormalTok{train.error)}
 \end{Highlighting}
 \end{Shaded}
-
-\begin{verbatim}
-## Parsed with column specification:
-## cols(
-##   season = col_character(),
-##   size = col_character(),
-##   speed = col_character(),
-##   mxPH = col_double(),
-##   mnO2 = col_double(),
-##   Cl = col_double(),
-##   NO3 = col_double(),
-##   NH4 = col_double(),
-##   oPO4 = col_double(),
-##   PO4 = col_double(),
-##   Chla = col_double(),
-##   a1 = col_double()
-## )
-\end{verbatim}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -925,6 +904,42 @@ fold & train.error & val.error\\
   \end{enumerate}
 \end{enumerate}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Evaluate fit of previous model against new algae.Test data}
+
+\CommentTok{# The error results from Question 4 part B help to identify that there is the smallest validation error when 3rd fold is used to validate the model}
+
+\CommentTok{# re-train a model on all of the original dataset}
+\NormalTok{lm.a1.full <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(a1}\OperatorTok{~}\NormalTok{., }\DataTypeTok{data =}\NormalTok{ algae.med.df[}\DecValTok{1}\OperatorTok{:}\DecValTok{12}\NormalTok{]) }\CommentTok{# should this include the a1 column?}
+
+\CommentTok{# predict the model output for algae a1 using the new algae.Test data that wasn't used to create the model}
+\NormalTok{predYvl =}\StringTok{ }\KeywordTok{predict}\NormalTok{(lm.a1.full,algae.Test)  }\CommentTok{# predict validation values}
+\NormalTok{val.a1 =}\StringTok{ }\NormalTok{algae.Test}\OperatorTok{$}\NormalTok{a1 }\CommentTok{# actual values of a1 in validation (algae.Test) data frame}
+
+\NormalTok{val.error.data =}\StringTok{ }\KeywordTok{mean}\NormalTok{((predYvl }\OperatorTok{-}\StringTok{ }\NormalTok{val.a1)}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\CommentTok{# compute and store test error}
+
+\NormalTok{val.error.data}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 250.1794
+\end{verbatim}
+
+When predictions for a1 are made using a linear model trained on the
+original data set and the new algae.Test data, a validation error is
+found to be 250.18. In Q4b (the 5 fold CV with test data coming from the
+same data set as the training data), the mean validation error was
+354.89 while the mean test error was 282.03. This presents a
+counterintuitive case in that the validation error from question 5
+(using algae.Test) would be expected to be closer to the mean validation
+error from Q4b, when in fact we've found the validation error from Q5 to
+be closer to the TRAINING ERROR from Q4b. This result was likely caused
+by random chance given the two data sets used but demonstrates an
+important lesson in checking possible anomolies in model generation and
+validation.
+
 \textbf{\emph{Cross Validation (CV) for Model Selection}}
 
 In this problem, we will be exploring a dataset of wages from a group of
@@ -944,52 +959,454 @@ between wages and age.
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(ISLR)}
 \KeywordTok{head}\NormalTok{(Wage)}
+
+\NormalTok{Wage =}\StringTok{ }\NormalTok{ISLR}\OperatorTok{::}\NormalTok{Wage}
 \end{Highlighting}
 \end{Shaded}
 
   \begin{enumerate}
+  \tightlist
   \item
     Plot wages as a function of age using \texttt{ggplot}. Your plot
     should include the datapoints (\texttt{geom\_point()}) as well as a
     smooth fit to the data (\texttt{geom\_smooth()}). Based on your
     visualization, what is the general pattern of wages as a function of
     age? Does this match what you expect?
-  \item
-    In this part of the problem, we will find a polynomial function of
-    age that best fits the wage data. For each polynomial function
-    between \(p=0, 1, 2, ... 10\):
-
-    \begin{enumerate}
-    \tightlist
-    \item
-      Fit a linear regression to predict wages as a function of \(age\),
-      \(age^2\), \ldots{} \(age^p\) (you should include an intercept as
-      well). Note that \(p=0\) model is an ``intercept-only'' model.
-    \item
-      Use 5-fold cross validation to estimate the test error for this
-      model. Save both the test error and the training error.
-    \end{enumerate}
-  \item
-    Plot both the test error and training error (on the same plot) for
-    each of the models estimated above as a function of \(p\). What do
-    you observe about the training error as \(p\) increases? What about
-    the test error? Based on your results, which model should you select
-    and why?
   \end{enumerate}
-
-  Note: \texttt{poly(age,\ degree=p,\ raw=TRUE)} will return a matrix
-  with \(p\) columns, where the \(p\)-th column is \(age^p\). For the
-  predictors in your regression use
-  \texttt{poly(age,\ degree=p,\ raw=FALSE)}. The \texttt{raw=FALSE}
-  option returns predictors which are numerically more stable (it
-  returns a matrix of ``orthogonal polynomials''). Numerical stability
-  can be an issue because \(age^p\) can be very very large if \(p\) is
-  large. The orthogonal polynomials returned when \texttt{raw=FALSE} are
-  rescaled to account for this so please use the \texttt{raw=FALSE}
-  option.\\
-  Hint: A function similar to \texttt{do.chunk} from problem 4 will be
-  helpful here as well.
 \end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{wage_age_plot <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(ISLR}\OperatorTok{::}\NormalTok{Wage, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ age, }\DataTypeTok{y =}\NormalTok{ wage)) }\OperatorTok{+}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{color =} \StringTok{'green'}\NormalTok{, }\DataTypeTok{alpha =} \FloatTok{0.5}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_smooth}\NormalTok{()}
+
+\NormalTok{wage_age_plot}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+\end{verbatim}
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-11-1} \end{center}
+
+There is a general pattern of increasing wage with age until it peaks in
+the early 40s. After that there is a slight dip in wage until retirement
+but it is generally a plateau until 62 after which point there is a more
+clear decline after people have retired. Based on current knowledge of
+trends in wage as a function of age and the justifications outlined
+above, the shape of this graph is generally what would be expected.
+
+\begin{verbatim}
+#.  In this part of the problem, we will find a polynomial function of age that best fits the wage data.  For each polynomial function between $p=0, 1, 2, ... 10$:
+
+    #.  Fit a linear regression to predict wages as a function of $age$, $age^2$, ... $age^p$ (you should include an intercept as well).  Note that $p=0$ model is an "intercept-only" model.
+    
+    #.  Use 5-fold cross validation to estimate the test error for this model. Save both the test error and the training error.  
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{do.wage <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(chunkid, chunkdef, p, dat)\{}
+\NormalTok{    Wage =}\StringTok{ }\NormalTok{dat}
+\NormalTok{    train =}\StringTok{ }\NormalTok{(chunkdef }\OperatorTok{!=}\StringTok{ }\NormalTok{chunkid)}
+
+    \ControlFlowTok{if}\NormalTok{(p}\OperatorTok{<}\DecValTok{1}\NormalTok{)\{}
+\NormalTok{      predictors.df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{age0 =} \DecValTok{1}\NormalTok{)}
+\NormalTok{      wage =}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(Wage}\OperatorTok{$}\NormalTok{wage)}
+      \KeywordTok{colnames}\NormalTok{(wage) =}\StringTok{ "wage"}
+      
+\NormalTok{      predictors_new =}\StringTok{ }\KeywordTok{cbind}\NormalTok{(predictors.df, wage)}
+      
+\NormalTok{      Xtr =}\StringTok{ }\NormalTok{predictors_new[train,}\DecValTok{1}\NormalTok{]  }\CommentTok{# get training set}
+\NormalTok{      Ytr =}\StringTok{ }\NormalTok{predictors_new[train,}\DecValTok{2}\NormalTok{]  }\CommentTok{# get true response values in trainig set}
+      
+\NormalTok{      Xvl =}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(predictors_new[}\OperatorTok{!}\NormalTok{train,}\DecValTok{1}\NormalTok{]) }\CommentTok{# get validation set}
+      \KeywordTok{colnames}\NormalTok{(Xvl) <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(}\StringTok{"age"}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+\NormalTok{      Yvl =}\StringTok{ }\NormalTok{predictors_new[}\OperatorTok{!}\NormalTok{train,}\DecValTok{2}\NormalTok{] }\CommentTok{# get true response values in validation set}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+\NormalTok{      predictors <-}\StringTok{ }\KeywordTok{poly}\NormalTok{(Wage}\OperatorTok{$}\NormalTok{age, p, }\DataTypeTok{raw =} \OtherTok{TRUE}\NormalTok{)}
+      
+\NormalTok{      predictors.df <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(predictors)}
+      
+      \KeywordTok{colnames}\NormalTok{(predictors.df) <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(}\StringTok{"age"}\NormalTok{, }\DecValTok{1}\OperatorTok{:}\NormalTok{p, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+      
+\NormalTok{      wage =}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(Wage}\OperatorTok{$}\NormalTok{wage)}
+      \KeywordTok{colnames}\NormalTok{(wage) =}\StringTok{ "wage"}
+      
+\NormalTok{      Xtr =}\StringTok{ }\NormalTok{predictors.df[train,}\DecValTok{1}\OperatorTok{:}\NormalTok{p]  }\CommentTok{# get training set}
+\NormalTok{      Ytr =}\StringTok{ }\NormalTok{wage[train,}\DecValTok{1}\NormalTok{]  }\CommentTok{# get true response values in trainig set}
+
+\NormalTok{      Xvl =}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(predictors.df[}\OperatorTok{!}\NormalTok{train,}\DecValTok{1}\OperatorTok{:}\NormalTok{p]) }\CommentTok{# get validation set}
+      \KeywordTok{colnames}\NormalTok{(Xvl) <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(}\StringTok{"age"}\NormalTok{, }\DecValTok{1}\OperatorTok{:}\NormalTok{p, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+    
+\NormalTok{      Yvl =}\StringTok{ }\NormalTok{wage[}\OperatorTok{!}\NormalTok{train,}\DecValTok{1}\NormalTok{] }\CommentTok{# get true response values in validation set}
+      
+\NormalTok{      predictors_new =}\StringTok{ }\KeywordTok{cbind}\NormalTok{(wage, predictors.df)}
+      
+\NormalTok{    \}}
+\NormalTok{      lm.wage <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(wage}\OperatorTok{~}\NormalTok{., }\DataTypeTok{data =}\NormalTok{ predictors_new)}
+      
+\NormalTok{      predYtr =}\StringTok{ }\KeywordTok{predict}\NormalTok{(lm.wage)  }\CommentTok{# predict training values}
+\NormalTok{      predYvl =}\StringTok{ }\KeywordTok{predict}\NormalTok{(lm.wage,Xvl)  }\CommentTok{# predict validation values}
+ 
+      \KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{degree =}\NormalTok{ p,}
+               \DataTypeTok{fold =}\NormalTok{ chunkid,}
+               \DataTypeTok{train.error =} \KeywordTok{mean}\NormalTok{((predYtr }\OperatorTok{-}\StringTok{ }\NormalTok{Ytr)}\OperatorTok{^}\DecValTok{2}\NormalTok{), }\CommentTok{# compute and store train error}
+               \DataTypeTok{val.error =} \KeywordTok{mean}\NormalTok{((predYvl }\OperatorTok{-}\StringTok{ }\NormalTok{Yvl)}\OperatorTok{^}\DecValTok{2}\NormalTok{)) }\CommentTok{# compute and store test error}
+    
+
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{nfold =}\StringTok{ }\DecValTok{5}
+
+\NormalTok{folds <-}\StringTok{ }\KeywordTok{cut}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{3000}\NormalTok{, nfold, }\DataTypeTok{label =} \OtherTok{FALSE}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{sample}\NormalTok{()}
+
+\NormalTok{error.folds.wages =}\StringTok{ }\KeywordTok{data.frame}\NormalTok{()}
+
+\NormalTok{allP =}\StringTok{ }\DecValTok{0}\OperatorTok{:}\DecValTok{10}
+
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{5555}\NormalTok{)}
+
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in}\NormalTok{ allP)\{}
+\NormalTok{  tmp.wage =}\StringTok{ }\KeywordTok{ldply}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\NormalTok{nfold, do.wage,}
+    \DataTypeTok{chunkdef=}\NormalTok{folds, }\DataTypeTok{p =}\NormalTok{ j, }\DataTypeTok{dat =}\NormalTok{ ISLR}\OperatorTok{::}\NormalTok{Wage)}
+  
+\NormalTok{  error.folds.wages =}\StringTok{ }\KeywordTok{rbind}\NormalTok{(error.folds.wages, tmp.wage)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in predict.lm(lm.wage, Xvl): prediction from a rank-deficient fit
+## may be misleading
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predict.lm(lm.wage, Xvl): prediction from a rank-deficient fit
+## may be misleading
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predict.lm(lm.wage, Xvl): prediction from a rank-deficient fit
+## may be misleading
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predict.lm(lm.wage, Xvl): prediction from a rank-deficient fit
+## may be misleading
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predict.lm(lm.wage, Xvl): prediction from a rank-deficient fit
+## may be misleading
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+
+## Warning in predYtr - Ytr: longer object length is not a multiple of shorter
+## object length
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{error.folds.wages}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    degree fold train.error val.error
+## 1       0    1    1760.658  1818.650
+## 2       0    2    1614.991  2287.384
+## 3       0    3    1826.166  1596.636
+## 4       0    4    1798.015  1574.150
+## 5       0    5    1863.495  1426.657
+## 6       1    1    1827.774  1750.271
+## 7       1    2    1655.951  2223.948
+## 8       1    3    1901.422  1519.542
+## 9       1    4    1880.733  1516.942
+## 10      1    5    1901.815  1359.657
+## 11      2    1    1907.899  1678.454
+## 12      2    2    1743.568  2096.245
+## 13      2    3    1976.139  1442.519
+## 14      2    4    1980.702  1478.615
+## 15      2    5    1981.440  1293.218
+## 16      3    1    1911.754  1674.902
+## 17      3    2    1747.873  2084.869
+## 18      3    3    1981.488  1437.902
+## 19      3    4    1986.530  1477.805
+## 20      3    5    1987.110  1287.313
+## 21      4    1    1915.649  1666.621
+## 22      4    2    1748.719  2086.505
+## 23      4    3    1983.835  1440.968
+## 24      4    4    1988.344  1476.949
+## 25      4    5    1991.093  1281.631
+## 26      5    1    1916.859  1665.437
+## 27      5    2    1748.616  2082.571
+## 28      5    3    1985.084  1440.281
+## 29      5    4    1986.945  1479.105
+## 30      5    5    1993.047  1283.141
+## 31      6    1    1916.029  1661.778
+## 32      6    2    1750.702  2083.477
+## 33      6    3    1984.943  1438.353
+## 34      6    4    1989.868  1479.196
+## 35      6    5    1996.814  1281.178
+## 36      7    1    1917.749  1660.059
+## 37      7    2    1751.579  2075.054
+## 38      7    3    1983.546  1440.512
+## 39      7    4    1991.902  1482.062
+## 40      7    5    2000.021  1282.036
+## 41      8    1    1918.110  1660.774
+## 42      8    2    1751.449  2075.277
+## 43      8    3    1984.295  1440.392
+## 44      8    4    1991.731  1481.545
+## 45      8    5    1999.785  1281.525
+## 46      9    1    1918.572  1657.291
+## 47      9    2    1752.903  2068.092
+## 48      9    3    1984.543  1446.357
+## 49      9    4    1992.879  1480.893
+## 50      9    5    2002.558  1275.206
+## 51     10    1    1918.611  1657.311
+## 52     10    2    1753.028  2068.021
+## 53     10    3    1984.496  1446.474
+## 54     10    4    1992.864  1480.923
+## 55     10    5    2002.577  1275.105
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{error.means =}\StringTok{ }\KeywordTok{aggregate}\NormalTok{(error.folds.wages[, }\DecValTok{3}\OperatorTok{:}\DecValTok{4}\NormalTok{], }\KeywordTok{list}\NormalTok{(error.folds.wages}\OperatorTok{$}\NormalTok{degree), mean)}
+\KeywordTok{colnames}\NormalTok{(error.means) =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"degree"}\NormalTok{, }\StringTok{"Training Error"}\NormalTok{,}\StringTok{"Validation Error"}\NormalTok{)}
+
+\NormalTok{error.melt =}\StringTok{ }\KeywordTok{melt}\NormalTok{(error.means, }\DataTypeTok{id.vars=}\KeywordTok{c}\NormalTok{(}\StringTok{'degree'}\NormalTok{), }\DataTypeTok{value.name=}\StringTok{'error'}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+#. Plot both the test error and training error (on the same plot) for each of the models estimated above as a function of $p$.  What do you observe about the training error as $p$ increases? What about the test error? Based on your results, which model should you select and why?
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{wage.error.plot <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(error.melt, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{degree, }\DataTypeTok{y=}\NormalTok{error, }\DataTypeTok{col =}\NormalTok{ variable))}\OperatorTok{+}\StringTok{ }
+\StringTok{    }\KeywordTok{geom_line}\NormalTok{() }\OperatorTok{+}
+\StringTok{    }\KeywordTok{stat_summary}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group=}\NormalTok{variable), }\DataTypeTok{fun.y=}\StringTok{"mean"}\NormalTok{, }\DataTypeTok{geom=}\StringTok{'line'}\NormalTok{, }\DataTypeTok{size=}\DecValTok{2}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{breaks =} \KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{10}\NormalTok{, }\DataTypeTok{by =} \DecValTok{1}\NormalTok{)) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Degree"}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Error"}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{    }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Error for Various Degree Polynomial Models for Wage as a Function of Age"}\NormalTok{) }\OperatorTok{+}\StringTok{ }
+\StringTok{    }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{plot.title =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{hjust =} \FloatTok{0.5}\NormalTok{))}
+    
+
+\NormalTok{wage.error.plot}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics{homework1-handout_files/figure-latex/unnamed-chunk-15-1} \end{center}
+
+As the degree (p) of the polynomial model used increases, the training
+error increases. For the first three degrees (0 through 2), there's a
+rapid increase in training error and then there is a slightly greater
+increase to p = 4 before it plateaus with only a slightly further
+increase as the degree of the polynomial model approaches 10. A similar
+pattern except in the decreasing direction is observed for the
+validation error with a rapid decrease in validation error from p = 0 to
+2 and then a gradual decrease in validation error to p = 4 and minimal
+change as the degree of the model goes to p = 10. Based on these
+results, the fourth degree polynomial should be selected because it has
+a low validation error similar to higher degree polynomials and the
+training error has yet to increase much more. At p = 0 through 3, the
+model is not flexible enough and will have a higher bias. Choosing a
+higher degree polynomial model than p = 4 won't make much difference in
+improving the model's validation error and the training error will also
+increase. While selecting a higher degree polynomial would increase
+flexibility of the model, it may result in overfitting with higher
+variance in modeled results. Additionally, a polynomial degree 4 would
+have a generally parabolic shape with slightly greater flexibility,
+which is generally the shape that might be expected to describe wage as
+a function of age (increase in pay until a peak age where there is a
+plateau and then a gradual drop off). Given these concerns, a fourth
+degree polynomial model seems most appropriate for this scenario.
+
+\begin{verbatim}
+  Note: `poly(age, degree=p, raw=TRUE)` will return a matrix with $p$ columns, where the $p$-th column is $age^p$.  For the predictors in your regression use `poly(age, degree=p, raw=FALSE)`.  The `raw=FALSE` option returns predictors which are numerically more stable (it returns a matrix of "orthogonal polynomials").  Numerical stability can be an issue because $age^p$ can be very very large if $p$ is large.  The orthogonal polynomials returned when `raw=FALSE` are rescaled to account for this so please use the `raw=FALSE` option.   
+  Hint: A function similar to `do.chunk` from problem 4 will be helpful here as well.   
+    
+\end{verbatim}
 
 \begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
 

@@ -515,18 +515,20 @@ There is a general pattern of increasing wage with age until it peaks in the ear
 
 
 ```{r}
-do.wage <- function(chunkid, chunkdef, p){
-    
+do.wage <- function(chunkid, chunkdef, p, dat){
+    Wage = dat
     train = (chunkdef != chunkid)
-    
+
     if(p<1){
       predictors.df <- data.frame(age0 = 1)
+      wage = data.frame(Wage$wage)
+      colnames(wage) = "wage"
       
-      predictors_new = cbind(predictors.df, wage = Wage$wage)
+      predictors_new = cbind(predictors.df, wage)
       
       Xtr = predictors_new[train,1]  # get training set
       Ytr = predictors_new[train,2]  # get true response values in trainig set
-
+      
       Xvl = as.data.frame(predictors_new[!train,1]) # get validation set
       colnames(Xvl) <- paste("age", 0, sep = "")
       Yvl = predictors_new[!train,2] # get true response values in validation set
@@ -548,7 +550,8 @@ do.wage <- function(chunkid, chunkdef, p){
     
       Yvl = wage[!train,1] # get true response values in validation set
       
-      predictors_new = cbind(wage = wage$wage, predictors.df)
+      predictors_new = cbind(wage, predictors.df)
+      
     }
       lm.wage <- lm(wage~., data = predictors_new)
       
@@ -579,7 +582,7 @@ set.seed(5555)
 
 for (j in allP){
   tmp.wage = ldply(1:nfold, do.wage,
-    chunkdef=folds, p = j)
+    chunkdef=folds, p = j, dat = ISLR::Wage)
   
   error.folds.wages = rbind(error.folds.wages, tmp.wage)
 }
