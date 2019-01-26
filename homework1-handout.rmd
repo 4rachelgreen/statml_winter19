@@ -158,7 +158,7 @@ mads_medians_ratio <- chem_mads/chem_medians
 
 ```
   
-The ratio of MAD to median for all chemicals except mxPH are smaller in magnitude than the variance to mean ratio for each parameter, respectively. For most parameters, the MAD to median was many times smaller, and in the case of NH4 there was a reduction of three orders of magnitude as compared to its variance to mean ratio. PO4 and oPO4 MAD to median ratios were two orders of magnitude smaler than variance to mean ratios. These results highlight the significant difference between the results presented through two methods of central tendency. The considerably lower MAD to median ratios demonstrates that a few outlier measurements may be causing much higher variance in the calculation of means while the calculation of MAD will not be severely influenced by outliers because the MAD is the median of the absolute difference between each measurement and the mediant of the measurements.Bearing this in mind, it is important to consider what an appropriate representation of central tendency is and determine whether or not particular measures truly are outliers or not.
+The ratio of MAD to median for all chemicals except mxPH are smaller in magnitude than the variance to mean ratio for each parameter, respectively. For most parameters, the MAD to median was many times smaller, and in the case of NH4 there was a reduction of three orders of magnitude as compared to its variance to mean ratio. PO4 and oPO4 MAD to median ratios were two orders of magnitude smaler than variance to mean ratios. These results highlight the significant difference between the results presented through two methods of central tendency. The considerably lower MAD to median ratios demonstrates that a few outlier measurements may be causing much higher variance in the calculation of means while the calculation of MAD will not be severely influenced by outliers because the MAD is the median of the absolute difference between each measurement and the mediant of the measurements. Bearing this in mind, it is important to consider what an appropriate representation of central tendency is and determine whether or not particular measures truly are outliers or not.
 
 2. __*Data visualization*__ Most of the time, the information in the data set is also well captured graphically. Histogram, scatter plot, boxplot, Q-Q plot are frequently used tools for data visualization. Use ggplot for all of these visualizations. 
     
@@ -172,7 +172,8 @@ hist_mxPH <- ggplot(algae, aes(x = mxPH)) +
   ylab('Probability') +
   scale_y_continuous(labels =scales::percent) +
   geom_density() +
-  geom_rug()
+  geom_rug() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 hist_mxPH
 ```
@@ -188,7 +189,8 @@ The histogram of mxPH is skewed with several more observations in the three bins
 
 algae_boxplot <- ggplot(algae, aes(size, a1)) +
   geom_boxplot(outlier.color = 'orange') +
-  labs(title = 'A conditioned Boxplot of Algal a1')
+  labs(title = 'A conditioned Boxplot of Algal a1') + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 algae_boxplot
 
@@ -201,13 +203,15 @@ algae_boxplot
     
 NO3_boxplot <- ggplot(algae, aes(x = 'NO3', y = NO3)) + 
   geom_boxplot(outlier.color = 'orange') +
-  labs(title = 'A conditioned Boxplot of NO3')
+  labs(title = 'A conditioned Boxplot of NO3') +
+  theme(plot.title = element_text(hjust = 0.5))
 
 NO3_boxplot 
 
 NO3season_boxplot <- ggplot(algae, aes(season, y = NO3)) +
   geom_boxplot(outlier.color = 'orange') +
-  labs(title = 'A conditioned Boxplot of NO3 by Season')
+  labs(title = 'A conditioned Boxplot of NO3 by Season') +
+  theme(plot.title = element_text(hjust = 0.5))
 
 NO3season_boxplot
 
@@ -219,23 +223,25 @@ By separating the NO3 data into seasons, we can see that there is a clear outlie
 
 NH4_boxplot <- ggplot(algae, aes(x = 'NH4', y = NH4)) + 
   geom_boxplot(outlier.color = 'orange') +
-  labs(title = 'A conditioned Boxplot of NH4')
+  labs(title = 'A conditioned Boxplot of NH4') +
+  theme(plot.title = element_text(hjust = 0.5))
 
 NH4_boxplot 
 
 NH4season_boxplot <- ggplot(algae, aes(season, y = NH4)) +
   geom_boxplot(outlier.color = 'orange') +
-  labs(title = 'A conditioned Boxplot of NH4 by Season')
+  labs(title = 'A conditioned Boxplot of NH4 by Season') +
+  theme(plot.title = element_text(hjust = 0.5))
 
 NH4season_boxplot
 
 ```
 
-Determining the number of outliers for NH4 measurements is slightly more challenging, but splitting up the box plot into seasonal observations helps once again. There are four clear true outliers across all seasons (one in both autumn and summer, two in winter) with values above the 5000 threshold that are well beyond the range of other measurements. It also seems reasonable to count the three outlier points (one in each of autumn, summer and winter) above the ~3000 value threshold as additional true outliers. While this is a somewhat arbitrary threshold, these three points seemed similarly distinct from the other outlier points closer to the extent of the Interquartile Range. However, it is possible that the presence of these three measures of NH4 at ~3000 across three seasons may suggest that this is not an outlier but a characteristic of the study site. The remaining outlier points below NH4 = 2500 are not considered true outliers because they are not too far beyond the Interquartile Range for each season and it would be challenging to tease out any further groupings to distinguish some of these points from others as ture outliers. Thus a total of seven true outliers were chose for NH4 observations.
+Determining the number of outliers for NH4 measurements is slightly more challenging, but splitting up the box plot into seasonal observations helps once again. There are four clear true outliers across all seasons (one in both autumn and summer, two in winter) with values above the 5000 threshold that are well beyond the range of other measurements. It also seems reasonable to count the three outlier points (one in each of autumn, summer and winter) above the ~3000 value threshold as additional true outliers. While this is a somewhat arbitrary threshold, these three points seemed similarly distinct from the other outlier points closer to the extent of the Interquartile Range. However, it is possible that the presence of these three measures of NH4 at ~3000 across three seasons may suggest that this is not an outlier but a characteristic of the study site. The remaining outlier points below NH4 = 2500 are not considered true outliers because they are not too far beyond the Interquartile Range for each season and it would be challenging to tease out any further groupings to distinguish some of these points from others as ture outliers. Thus a total of seven true outliers were chosen for NH4 observations.
 
     #. Compare mean & variance vs. median & MAD for $NO3$ and $NH4$. What do you notice? Can you conclude which set of measures is more robust when outliers are present? 
+The ratios of the variances to means for both nitrate and ammonium were 4.3 and 7683, respectively. The particularly high variance to mean ratio for ammonium results from the considerable variation in the data set that can be visually observed in the above graph. For ratio of variance to mean for nitrate is much smaller in magnitude because it only has a single extreme outlier that causes the variance to four times larger than its mean. On the other hand, the ratios of MADs to medians for both of these chemical are 0.81 and 1.08, respectively. These ratios demonstrate that the MADs for these two chemicals are much closer to their respective medians. These results demonstrates that using MADs and medians are much more robust to outliers as measures of central tendency.
 
-There is a larger difference between mean and median values for NH4 than NO3. The same pattern is true for variance and MAD, however the variance is much larger for NH4 than NO3. The median and MAD are a more appropriate measure when outliers are present because averaging with outliers can skew the calculation as was the case with one autumn measure of both NO3 and NH4. The outliers identified for NH4 measurements in other seasons similarly would skew the mean of this parameter. 
         
 ----------------------------------------------
     
@@ -500,7 +506,10 @@ Wage = ISLR::Wage
 
 wage_age_plot <- ggplot(ISLR::Wage, aes(x = age, y = wage)) + 
   geom_point(color = 'green', alpha = 0.5) +
-  geom_smooth()
+  geom_smooth() +
+  xlab("Age") + ylab("Wage") + 
+  ggtitle("Wage as a Function of Age")
+
 
 wage_age_plot
 ```
@@ -568,7 +577,7 @@ do.wage <- function(chunkid, chunkdef, p, dat){
 ```
 
 
-```{r}
+```{r, warning=FALSE}
 nfold = 5
 
 folds <- cut(1:3000, nfold, label = FALSE) %>% 
@@ -587,7 +596,6 @@ for (j in allP){
   error.folds.wages = rbind(error.folds.wages, tmp.wage)
 }
 
-error.folds.wages
 ```
 
 ```{r}
@@ -606,7 +614,7 @@ wage.error.plot <- ggplot(error.melt, aes(x=degree, y=error, col = variable))+
     stat_summary(aes(group=variable), fun.y="mean", geom='line', size=2) +
     scale_x_continuous(breaks = seq(0,10, by = 1)) +
     xlab("Degree") + ylab("Error") + 
-    ggtitle("Error for Various Degree Polynomial Models for Wage as a Function of Age") + 
+    ggtitle("Error for Various Degree Polynomial Models \nfor Wage as a Function of Age") + 
     theme(plot.title = element_text(hjust = 0.5))
     
 
@@ -620,6 +628,19 @@ As the degree (p) of the polynomial model used increases, the training error inc
 ---------------
 
 7. __(231 Only)__ **The bias-variance tradeoff**.  Prove that the mean squared error can be decomposed into the variance plus bias squared.  That is, who $E[(\hat \theta - \theta)^2] = \text{Var}(\hat \theta)  + \text{Bias}(\hat \theta )^2$ where $\text{Bias}(\hat \theta) = E[\hat \theta - \theta]$.  Here $\hat \theta$ is an estimator (a random variable) of the fixed unknown constant $\theta$.  Hint: reogranize terms in the MSE by adding and subtracting $E[\hat \theta]$. 
+
+Proof that $M S E ( \hat { p } ) = V ar _ { p }  ( \hat { p } ) + B i a s _ { p }  ( \hat { p } , p ) ^ { 2 }$ where, $\hat{p}$ is the $MSE$ estimator of $p$:   
+We have,    
+   
+ $\quad M S E ( \hat { p } ) = E _ { p } \left[ ( \hat { p } - p ) ^ { 2 } \right]$    
+$= E _ { p } \left[ \left( \hat { p } - E _ { p } ( \hat { p } ) + E _ { 0 } ( \hat { p } ) - p \right) ^ { 2 } \right]$   
+$= E _ { P } \left[ \hat { p } - E _ { p } ( \hat { p } ) ^ { 2 } \right] + E _ { p } \left[ 2 \left( \hat { p } - E _ { p } ( \hat { p } ) \left( E _ { p } ( \hat { p } ) - p \right) \right] + E _ { p } \left[ \left( E _ { p } ( \hat { p } ) - p \right) ^ { 2 } \right]\right.$   
+$= E _ { p } \left[ \hat { p } - E _ { p } ( \hat { p } ) ^ { 2 } \right] + 2 \left( E _ { p } ( \hat { p } ) - p \right) \left( E _ { p } ( \hat { p } ) - E _ { p } ( \hat { p } ) \right) + \left( E _ { p } ( \hat { p } ) - p \right) ^ { 2 }$
+ constants: $E _ { p } ( \hat { p } ) - p$ and  $E _ { p } ( \hat { p } )$
+    
+$= E _ { p } \left[ \hat { p } - E _ { p } ( \hat { p } ) ^ { 2 } \right] + \left( E _ { p } ( \hat { p } ) - p \right) ^ { 2 }$ 
+    
+$= \operatorname { Var } ( \hat { p } ) + \operatorname { Bias } ( \hat { p } , p ) ^ { 2 }$ by definition. 
 
 8. __(231 Only)__ As we discussed in class, distance metrics satisfy the following properties:  
   
