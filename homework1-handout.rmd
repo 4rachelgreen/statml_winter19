@@ -432,6 +432,8 @@ error.folds = NULL
 
 algae.med.df = as.data.frame(algae.med)
 
+set.seed(654)
+
 tmp = ldply(1:nfold, do.chunk,
           chunkdef=IDs.cut, dat=algae.med.df)
 
@@ -477,7 +479,7 @@ val.error.data = mean((predYvl - val.a1)^2) # compute and store test error
 val.error.data
 
 ```
-When predictions for a1 are made using a linear model trained on the original data set and the new algae.Test data, a validation error is found to be 250.18. In Q4b (the 5 fold CV with test data coming from the same data set as the training data), the mean validation error was 344.03 while the mean test error was 281.50. This presents a counterintuitive case in that the validation error from question 5 (using algae.Test) would be expected to be closer to the mean validation error from Q4b, when in fact we've found the validation error from Q5 to be closer to the TRAINING ERROR from Q4b. This result was likely caused by random chance given the two data sets used but demonstrates an important lesson in checking possible anomolies in model generation and validation.
+When predictions for a1 are made using a linear model trained on the original data set and the new algae.Test data, a validation error is found to be 250.18. In Q4b (the 5 fold CV with test data coming from the same data set as the training data), the mean validation error was 354.89 while the mean test error was 282.03. This presents a counterintuitive case in that the validation error from question 5 (using algae.Test) would be expected to be closer to the mean validation error from Q4b, when in fact we've found the validation error from Q5 to be closer to the TRAINING ERROR from Q4b. This result was likely caused by random chance given the two data sets used but demonstrates an important lesson in checking possible anomolies in model generation and validation.
 
 **_Cross Validation (CV) for Model Selection_**
 
@@ -488,13 +490,15 @@ In this problem, we will be exploring a dataset of wages from a group of 3000 wo
 ```{r islr_install, indent=indent1, message=F, eval=FALSE, warning=FALSE}
 library(ISLR)
 head(Wage)
+
+Wage = ISLR::Wage
 ```
 
 
     #.  Plot wages as a function of age using `ggplot`.  Your plot should include the datapoints (`geom_point()`) as well as a smooth fit to the data (`geom_smooth()`).  Based on your visualization, what is the general pattern of wages as a function of age? Does this match what you expect?
 ```{r}
 
-wage_age_plot <- ggplot(Wage, aes(x = age, y = wage)) + 
+wage_age_plot <- ggplot(ISLR::Wage, aes(x = age, y = wage)) + 
   geom_point(color = 'green', alpha = 0.5) +
   geom_smooth()
 
@@ -564,17 +568,16 @@ do.wage <- function(chunkid, chunkdef, p){
 ```{r}
 nfold = 5
 
-folds <- cut(1:nrow(Wage), nfold, label = FALSE) %>% 
+folds <- cut(1:3000, nfold, label = FALSE) %>% 
   sample()
 
 error.folds.wages = data.frame()
-error0 = NULL
 
 allP = 0:10
 
 set.seed(5555)
 
-for (j in 0:10){
+for (j in allP){
   tmp.wage = ldply(1:nfold, do.wage,
     chunkdef=folds, p = j)
   
