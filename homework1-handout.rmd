@@ -92,41 +92,52 @@ glimpse(algae)
     `dplyr`. 
 
 
-```{r count by season}
+```{r count by season, echo = FALSE}
 
 season_obs <- algae %>% 
   count("season")
 
-season_obs
+kable(season_obs, "latex", booktabs = T, 
+      caption = "Number of Observations in Each Season") %>%  
+      kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 
 ```
-There are 40 observations in autumn, 53 in spring, 45 in summer, and 62 in winter.
+
 
     #. Are there missing values? Calculate the mean and variance of each
     chemical (Ignore $a_1$ through $a_7$). What do you notice about the
     magnitude of the two quantities for different chemicals? 
     
-```{r no data count}
+```{r no data count, echo = FALSE}
 
 algae_na <- algae %>%
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function(x) sum(is.na(x)))
 
+kable(algae_na, "latex", booktabs = T, 
+      caption = "Missing Values for Each Chemical") %>%  
+      kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 ```
 
 There are missing values for several variables. One value is missing for mxPH. NO3, NH4, oPO4, and PO4 are all missing two values. Cl and Chla are each missing 10 and 12 variables.
 
-```{r means and variance}
+```{r means and variance, echo = FALSE, warning = FALSE}
 
-print('Mean')
+
 chem_means <- algae %>% 
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) mean(x, na.rm=TRUE)) 
 
-print('Variance')
 chem_vars <- algae %>% 
    select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) var(x, na.rm=TRUE)) 
+
+mean_var_bind <- rbind(chem_means, chem_vars)
+rownames(mean_var_bind) <- c("Mean", "Variance")
+
+kable(mean_var_bind, "latex", booktabs = T, 
+      caption = "Chemical Means and Variances") %>%  
+      kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 
 var_mean_ratio <- chem_vars/chem_means
 
@@ -154,6 +165,13 @@ chem_mads <- algae %>%
   select(c('mxPH','mnO2','Cl','NO3','NH4', 'oPO4','PO4','Chla')) %>%
   summarise_all(function (x) mad(x, na.rm=TRUE))
 
+med_mad_bind <- rbind(chem_medians, chem_mads)
+rownames(med_mad_bind) <- c("Median", "MAD")
+
+kable(med_mad_bind, "latex", booktabs = T, 
+      caption = "Chemical Medians and MADs") %>%  
+      kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
+
 mads_medians_ratio <- chem_mads/chem_medians
 
 ```
@@ -164,16 +182,15 @@ The ratio of MAD to median for all chemicals except mxPH are smaller in magnitud
     
     #. Produce a histogram of $mxPH$ with the title 'Histogram of mxPH' based on algae data set. Use an appropriate argument to show the probability instead of the frequency as the vertical axis. (Hint: look at the examples in the help file for function `geom_histogram()`). Is the distribution skewed? 
     
-```{r}
+```{r, warning = FALSE}
 
 hist_mxPH <- ggplot(algae, aes(x = mxPH)) +
-  geom_histogram(bins = 12)  + #2*(200)^1/3
-  labs(title = 'Histogram of mxPH') +
-  ylab('Probability') +
-  scale_y_continuous(labels =scales::percent) +
-  geom_density() +
-  geom_rug() +
-  theme(plot.title = element_text(hjust = 0.5))
+geom_histogram(bins = 12, aes(y = ..density..)) + #2*(200)^1/3
+labs(title = 'Histogram of mxPH') +
+ylab('Probability') +
+scale_y_continuous(labels =scales::percent) +
+geom_density() +
+geom_rug()
 
 hist_mxPH
 ```
@@ -185,7 +202,7 @@ The histogram of mxPH is skewed with several more observations in the three bins
     #. Create a boxplot with the title 'A conditioned Boxplot of Algal $a_1$' for $a_1$ grouped by $size$. (Refer to help page for `geom_boxplot()`). 
   
   
-```{r boxplot}
+```{r boxplot, warning = FALSE}
 
 algae_boxplot <- ggplot(algae, aes(size, a1)) +
   geom_boxplot(outlier.color = 'orange') +
@@ -199,7 +216,7 @@ algae_boxplot
     #. Are there any outliers for $NO3$ and $NH4$? How many observations would you consider as outliers? How did you arrive at this conclusion? 
     
     
-```{r}
+```{r, warning = FALSE}
     
 NO3_boxplot <- ggplot(algae, aes(x = 'NO3', y = NO3)) + 
   geom_boxplot(outlier.color = 'orange') +
@@ -219,7 +236,7 @@ NO3season_boxplot
 
 By separating the NO3 data into seasons, we can see that there is a clear outlier in autumn that is significantly further from the Interquartile Range than outliers at more than four times the value measured for NO3 in other months. Note: outliers are indicated in orange. Thus, we will only consider this one autumn outlier as a true outlier. 
 
-```{r}
+```{r, warning = FALSE}
 
 NH4_boxplot <- ggplot(algae, aes(x = 'NH4', y = NH4)) + 
   geom_boxplot(outlier.color = 'orange') +
@@ -266,12 +283,16 @@ problem.
     are there in each variable? 
 
 
-```{r missing values}
+```{r missing values, echo = FALSE}
 
 missingvalues <- algae %>%
   select(c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4',
   'oPO4','PO4','Chla','a1','a2','a3','a4','a5', 'a6', 'a7')) %>%
   summarise_all(function(x) sum(is.na(x)))
+
+kable(missingvalues, "latex", booktabs = T, 
+      caption = "Counts of Missing Values") %>%  
+      kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 
 ```
 
@@ -318,6 +339,10 @@ algae.med.199 <- algae.med[199, 4:11]
 algae.med.rows <- rbind(algae.med.48, algae.med.62, algae.med.199)
 rownames(algae.med.rows) <- c("48", "62", "199")
 
+
+```
+
+```{r, echo = FALSE}
 kable(algae.med.rows, "latex", booktabs = T, 
       caption = "Chemical Observations for Specific Rows After Imputing") %>%  
       kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
@@ -365,7 +390,7 @@ The model predicts a value of `r round(prediction28, 2)` units of P04 in the $28
 
     #. **Questioning missing data assumptions**:  When might imputation using only the observed data lead you to incorrect conclusions?  In a couple of sentences, describe a scenario in which the imputed values of the chemical abundances in the algae data  (imputed using either the median or correlation method) might be a poor substitute for the true missing values.  Hint: look at the example from lecture 2.  
 
-Imputing missing values using only observed data could lead to issues with conclusion generation if there is systemic bias to the way in which data points are missing. There could be some sort of survivorship bias in the missing values for this algae data set similar to the example given in class about using bullet hole locations in airplanes as a means of deciding where to reinforce the body of the plane. More careful examination is necessary to deduce if there is some systemic bias in the missing values in this algae data set. For example, if the data was missing for certain chemicals at one site on multiple sampling days because inclement weather and flooding during a particular season made measurements infeasible, then there could be a bias in the missing data. Imputing the missing values based on other observations would likely fail to capture the chemical composition of that river during flooding events that was directly measured.  
+Imputing missing values using only observed data could lead to issues with conclusion generation if there is systemic bias to the way in which data points are missing. Furthermore, imputing missing values based on the presence points will reduce the variation in the entire data set. There could be some sort of survivorship bias in the missing values for this algae data set similar to the example given in class about using bullet hole locations in airplanes as a means of deciding where to reinforce the body of the plane. More careful examination is necessary to deduce if there is some systemic bias in the missing values in this algae data set. For example, if the data was missing for certain chemicals at one site on multiple sampling days because inclement weather and flooding during a particular season made measurements infeasible, then there could be a bias in the missing data. Imputing the missing values based on other observations would likely fail to capture the chemical composition of that river during flooding events that was directly measured.  
 
 **_Estimating the Test Error with Cross Validation (CV)_**
     
@@ -389,7 +414,6 @@ model to data that have not been used for training.
 IDs <- c(1:200)       
 IDs.cut <- cut(IDs, 5, label = FALSE) %>% 
   sample()
-IDs.cut
 
 ```
   
@@ -444,13 +468,17 @@ tmp = ldply(1:nfold, do.chunk,
           chunkdef=IDs.cut, dat=algae.med.df)
 
 error.folds=rbind(error.folds, tmp)
+mean.val = mean(error.folds$val.error)
+mean.train = mean(error.folds$train.error)
+mean.errors = data.frame(fold = "Mean", train.error = mean.train, val.error = mean.val)
+error.folds = rbind(error.folds, mean.errors)
+
 
 kable(error.folds, "latex", booktabs = T, 
       caption = "Training and Validation Errors for 5-fold Cross Validation") %>%  
       kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
 
-mean.val = mean(error.folds$val.error)
-mean.train = mean(error.folds$train.error)
+
 ```
 
 
@@ -507,8 +535,9 @@ Wage = ISLR::Wage
 wage_age_plot <- ggplot(ISLR::Wage, aes(x = age, y = wage)) + 
   geom_point(color = 'green', alpha = 0.5) +
   geom_smooth() +
-  xlab("Age") + ylab("Wage") + 
-  ggtitle("Wage as a Function of Age")
+  xlab("Age (Years)") + ylab("Wage (thousands of dollars)") + 
+  ggtitle("Wage as a Function of Age") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 
 wage_age_plot
@@ -660,8 +689,23 @@ $= \operatorname { Var } ( \hat { p } ) + \operatorname { Bias } ( \hat { p } , 
     Show that the following measures are distance metrics by showing the above properties hold:
 
     #. $d(x,y) = \|x-y\|_2$
-
+$\text { Proof that } d _ { 2 } \text { is a metric in } \mathbb { R } ^ { 2 }$  
+$\text { Let } x , y \in \mathbb { R } ^ { 2 } \text { . We have } d _ { 2 } ( x , y ) = \| x - y \| _ { 2 } = \left[ \left( x _ { 1 } - y _ { 1 } \right) ^ { 2 } + \left( x _ { 2 } - y _ { 2 } \right) ^ { 2 } \right] ^ { 1 / 2 } \geq 0 \quad \forall x, y \neq 0$  
+$\text { Note, } , d _ { 2 } ( x , y ) = 0 \Leftrightarrow x _ { i } = y _ { i } \quad \forall _ { i \in \mathbb { Z } }$ (positivity)  
+$\begin{aligned} \text { We have } & d _ { 2 } ( x , y ) = \| x - y \| _ { 2 } = \left[ \left( x _ { 1 } - y _ { 1 } \right) ^ { 2 } + \left( x _ { 2 } - y _ { 2 } \right) ^ { 2 } \right] ^ { 1 / 2 } \\ & = \left[ \left( y _ { 1 } - x _ { 1 } \right) ^ { 2 } + \left( y _ { 2 } - x _ { 2 } \right) ^ { 2 } \right] ^ { 1 / 2 } \\ & = \| x - y \|  _ { 2 } = d _ { 2 } ( y , x ) \end{aligned}$ (symmetry)  
+$\text { Take } z \in \mathbb { R } ^ { 2 } \text { then, }$  
+$\begin{aligned} d _ { 2 } ( x , z ) = \| x - z \| _ { 2 } & = \left\| ( x - y ) + ( y - z ) \| _ { 2 } \right. \\ & \leq \| x - y \| _ { 2 } + \| y - z \| _ { 2 } = d ( x , y ) + d _ { 2 } ( y , z ) \end{aligned}$ (triangle inequality). 
 
     #. $d(x,y) = \|x-y\|_\infty$
     
 
+$\text { Proof that } d _ { \infty } ( x , y ) \text { is a metric in } \mathbb { R } ^ { 2 }$:  
+$\text { Take } x , y \in \mathbb { R } ^ { 2 }.\text { We have } d _ { \infty } ( x , y ) = \| x - y \| _ { \infty }  = \max \left\{ \left| x _ { 1 } - y _ { 1 } \right| , \left| x _ { 2 } - y _ { 2 } \right| \right\} \geq 0 \quad \forall x, y \neq 0$  
+$\text { Note, } d _ { \infty } ( x , y ) = 0 \Leftrightarrow x _ { i } = y _ { 1 } = 0 \quad \forall _ { i } \in Z$ (positivity)  
+We have $d _ { \alpha } ( x , y ) = \| x - y \| _ { \infty } = \max \left\{ \left| x _ { 1 } - y _ { 1 } \right| , \left| x _ { 2 } - y _ { 2 } \right| \right\}$  
+$= \max \left\{ \left| y _ { 1 } - x _ { 1 } \right| , \left| y _ { 2 } - x _ { 2 } \right| \right\}$  
+$= \| y - x \| _ { \infty } = d _ { \infty } ( y , x )$ (symmetry)  
+$\text { Take } z \in \mathbb { R } ^ { 2 } \text { then, }$  
+$d _ { \infty } ( x , z ) = \max \left\{ \left| x _ { 1 } - z _ { 1 } \right| , \left| x _ { 2 } - z _ { 2 } \right| \right\} \leq \max \left\{ \left| x _ { 1 } - y _ { 1 } \right| , \left| x _ { 2 } - y _ { 2 } \right| ,\left| y _ { 1 } - z _ { 1 } \right|, \left| y _ { 2 } - z _ { 2 } \right| \right\}$  
+$= \max \left\{ \left| x _ { 1 } - y _ { 1 } \right| x _ { 2 } - y _ { 2 } | \right\} + \max \left\{ \left| y _ { 1 } - z _ { 1 } \right| , | x _ { 2 } - z _ { 2 } \right| \}$  
+$= d _ { \infty } ( x , y ) + d _ { \infty } ( y , z )$ by definition.  
